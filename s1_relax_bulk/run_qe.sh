@@ -5,11 +5,10 @@
 #SBATCH --partition=west
 #SBATCH --mem=20Gb
 
-module list
 
 start=$SECONDS
-python relax.py
+python relax.py | tee bash_log.txt
 
 duration=$(( SECONDS - start))
-echo "Completed in $duration seconds"
+echo "Completed in $duration seconds" | tee -a bash_log.txt
 
