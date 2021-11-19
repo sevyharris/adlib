@@ -3,9 +3,8 @@ import re
 from datetime import datetime
 
 
-base_dir = '/home/moon/converge_test/'
-pseudo_dir = '/home/harris.se/dft_adsorption/pseudos/'
-base_py = '/home/moon/dft_adsorption/co2.py'
+base_dir = '/home/harris.se/converge_test/'
+base_py = '/home/harris.se/dft_adsorption/s3_co2/co2.py'
 job_file = os.path.join(base_dir, 'run_qe_jobs.sh')
 os.makedirs(base_dir, exist_ok=True)
 
@@ -34,7 +33,7 @@ for kpt in kpts:
             else:
                 f.write(line.replace(match[0], f'kpts=({kpt}, {kpt}, {kpt})'))
 
-run_i = os.path.join(base_dir, 'run$SLURM_ARRAY_TASK_ID', 'relax.py')
+run_i_dir = os.path.join(base_dir, 'run$SLURM_ARRAY_TASK_ID')
 # write the array job file
 with open(job_file, 'w') as f:
     f.write('#!/bin/bash\n\n')
@@ -43,4 +42,6 @@ with open(job_file, 'w') as f:
     f.write('#SBATCH --mem=20Gb\n')
     f.write('#SBATCH --partition=short,west\n')
     f.write(f'#SBATCH --array={kmin}-{kmax}\n\n')
-    f.write(f'python {run_i}\n')
+    f.write(f'cd {run_i_dir}\n')
+    f.write(f'python relax.py\n')
+
