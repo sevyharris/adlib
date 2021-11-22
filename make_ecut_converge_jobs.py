@@ -23,20 +23,17 @@ with open(base_py, 'r') as f:
 pattern_ecutwfc = r'ecutwfc\s*:\s*(\d)*'
 pattern_ecutrho = r'ecutrho\s*:\s*(\d)*'
 for i, ecut in enumerate(ecuts):
-    run_dir = os.path.join(base_dir, f'run{ecut}')
+    run_dir = os.path.join(base_dir, f'run{i}')
     os.makedirs(run_dir, exist_ok=True)
     fname = os.path.join(run_dir, 'relax.py')
     with open(fname, 'w') as f:
         for line in lines:
             match1 = re.search(pattern_ecutwfc, line)
-            if match1 is None:
-                f.write(line)
-            else:
-                f.write(line.replace(match1[0], f'ecutwfc: {ecuts[i]}'))
-            
             match2 = re.search(pattern_ecutrho, line)
-            if match2 is None:
+            if match1 is None and match2 is None:
                 f.write(line)
+            elif match1:
+                f.write(line.replace(match1[0], f'ecutwfc: {ecuts[i]}'))
             else:
                 f.write(line.replace(match2[0], f'ecutrho: {ecutrhos[i]}'))
 
