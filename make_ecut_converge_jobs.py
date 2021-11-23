@@ -9,7 +9,7 @@ job_file = os.path.join(base_dir, 'run_qe_jobs.sh')
 os.makedirs(base_dir, exist_ok=True)
 
 # make files to run CO2 relaxation
-ecuts = [25, 36, 47, 58]
+ecuts = [30.5, 41.5, 52.5]
 ecutrhos = []
 for e in ecuts:
     ecutrhos.append(e * 10)
@@ -20,8 +20,8 @@ with open(base_py, 'r') as f:
         lines.append(line)
 
 # create copies of the python file
-pattern_ecutwfc = r'ecutwfc\s*:\s*(\d)*'
-pattern_ecutrho = r'ecutrho\s*:\s*(\d)*'
+pattern_ecutwfc = r"'ecutwfc'\s*:\s*(\d)*"
+pattern_ecutrho = r"'ecutrho'\s*:\s*(\d)*"
 for i, ecut in enumerate(ecuts):
     run_dir = os.path.join(base_dir, f'run{i}')
     os.makedirs(run_dir, exist_ok=True)
@@ -33,9 +33,9 @@ for i, ecut in enumerate(ecuts):
             if match1 is None and match2 is None:
                 f.write(line)
             elif match1:
-                f.write(line.replace(match1[0], f'ecutwfc: {ecuts[i]}'))
+                f.write(line.replace(match1[0], f"'ecutwfc': {ecuts[i]}"))
             else:
-                f.write(line.replace(match2[0], f'ecutrho: {ecutrhos[i]}'))
+                f.write(line.replace(match2[0], f"'ecutrho': {ecutrhos[i]}"))
 
 
 run_i_dir = os.path.join(base_dir, 'run$SLURM_ARRAY_TASK_ID')
