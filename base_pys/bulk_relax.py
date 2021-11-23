@@ -36,7 +36,7 @@ input_settings = {
 
 calc = Espresso(pseudopotentials=pseudopotentials,
                 tstress=True, tprnfor=True, kpts=(2, 2, 2),
-                pseudo_dir='../pseudos/',
+                pseudo_dir='/home/harris.se/espresso/pseudos/',
                 input_data=input_settings)
 cu_bulk.calc = calc
 opt = LBFGS(cu_bulk, logfile=logfile, trajectory='qn.traj')

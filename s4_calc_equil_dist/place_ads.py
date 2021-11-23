@@ -17,14 +17,11 @@ clean_slab = traj[-1]
 write('opt_slab.xyz', clean_slab)
 
 # import optimized co2
-d = 2.0
-co2 = Atoms('CO2', positions=[(0, 0, 0), (d, 0, 0), ((-d, 0, 0))])
-co2.center(vacuum=12)
-# co2_file = 'co2.pwo'
-# with open(co2_file, 'r') as f:
-#     traj = list(read_espresso_out(f, index=slice(None)))
-# co2 = traj[-1]
-# write('opt_co2.xyz', co2)
+co2_file = 'co2.pwo'
+with open(co2_file, 'r') as f:
+    traj = list(read_espresso_out(f, index=slice(None)))
+    co2 = traj[-1]
+    write('opt_co2.xyz', co2)
 
 # place the co2
 index = [atom.index for atom in co2 if atom.symbol == 'C']
@@ -57,7 +54,7 @@ input_settings = {
 }
 
 calc = Espresso(pseudopotentials=pseudopotentials,
-                tstress=True, tprnfor=True, kpts=(1, 1, 1),
+                tstress=True, tprnfor=True, kpts=(2, 2, 2),
                 pseudo_dir='../pseudos/',
                 input_data=input_settings)
 clean_slab.calc = calc
