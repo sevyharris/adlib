@@ -1,0 +1,4 @@
+       Step     Time          Energy         fmax
+*Force-consistent energies used in optimization.
+LBFGS:    0 15:25:50   -11597.928545*       0.0000
+Completed in 303.2360646724701 seconds

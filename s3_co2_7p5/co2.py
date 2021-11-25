@@ -31,7 +31,7 @@ input_settings = {
 
 d = 1.0
 co2 = Atoms('CO2', positions=[(0, 0, 0), (d, 0, 0), ((-d, 0, 0))])
-co2.center(vacuum=12)
+co2.center(vacuum=7.5)
 write(co2_init_file, co2)
 
 calc = Espresso(pseudopotentials=pseudopotentials,
