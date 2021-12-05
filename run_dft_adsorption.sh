@@ -4,7 +4,8 @@
 #SBATCH --job-name=DFT_ADSORPTION
 #SBATCH --partition=west,short
 #SBATCH --mem=20Gb
+#SBATCH --ntasks=4
 
-python dft_adsorption.py | tee bash_log.txt
+python dft_adsorption.py
 
 
