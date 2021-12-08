@@ -6,6 +6,6 @@
 #SBATCH --mem=20Gb
 #SBATCH --ntasks=4
 
-python dft_adsorption.py
+python dft_adsorption.py co2_cu_beefvdw.yaml
 
 
