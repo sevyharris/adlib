@@ -1,7 +1,6 @@
-BASE_DIR: /scratch/harris.se/espresso/copper111/co2_beefvdw
-PSEUDOS_DIR: /home/harris.se/espresso/pseudos
+pseudos_dir: /home/moon/espresso/pseudos
 adsorbate: CO2
-adsorbate_file: /scratch/harris.se/espresso/dft_adsorption/adsorbates/CO2.xyz
+adsorbate_file: /home/moon/dft_adsorption/adsorbates/CO2.xyz
 crystal_structure: fcc
 dft_functional: BEEF-VDW
 ecutrho: 500

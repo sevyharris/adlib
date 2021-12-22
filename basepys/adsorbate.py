@@ -44,7 +44,7 @@ ads_calc = Espresso(pseudopotentials=settings['pseudopotentials'],
                     tstress=True,
                     tprnfor=True,
                     kpts=settings['kpts_ads'],
-                    pseudo_dir=settings['PSEUDOS_DIR'],
+                    pseudo_dir=settings['pseudos_dir'],
                     input_data=espresso_settings,
                     directory=ADS_DIR)
 adsorbate.calc = ads_calc

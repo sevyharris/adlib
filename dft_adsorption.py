@@ -12,32 +12,18 @@ from ase.io.espresso import read_espresso_out
 import job_manager
 
 
-# input variables - ask Lance for access to dftinputgen
-
-# surface element
-# adsorbate name
-# surface site
-# DFT functional
-# energy cutoffs
-# k pts sampling
-# vacuum between unit cells
-# force convergence
-
-# TODO check for restart
-
-
 START_DIR = os.path.abspath(os.path.dirname(__file__))
 
+#################################################################
 # Parse and verify input file
 input_file = sys.argv[1]
 with open(input_file) as f:
     input_settings = yaml.load(f, Loader=yaml.FullLoader)
 
-try:
-    BASE_DIR = input_settings['BASE_DIR']  # or use the same directory as the input file, like RMG does
-except KeyError:
-    BASE_DIR = os.path.dirname(input_file)
-    input_settings['BASE_DIR'] = BASE_DIR
+    
+BASE_DIR = os.path.abspath(os.path.dirname(input_file))
+input_settings['BASE_DIR'] = BASE_DIR
+
 
 if not os.path.exists(input_settings['pseudos_dir']):
     raise OSError('Must specify valid path to directory with pseudopotential files')
@@ -51,6 +37,12 @@ try:
 except KeyError:
     force_recalc = False
 force_recalc = True
+
+
+try:
+    job_manager_type = input_settings['job_manager']
+except KeyError:
+    job_manager_type = 'default'
 
 
 ############################################################################
@@ -82,12 +74,13 @@ logger.info(f'Creating setting file {settings_file}')
 
 input_settings['BULK_DIR'] = BULK_DIR
 input_settings['ADS_DIR'] = ADS_DIR
+input_settings['ADS_DIR'] = ADS_DIR
 
 
 # TODO mpi settings
-logger.info(f'Settings:\n{settings}')
+logger.info(f'Settings:\n{input_settings}')
 with open(settings_file, 'w') as f:
-    yaml.dump(settings, f)
+    yaml.dump(input_settings, f)
 
 
 ############################################################################
@@ -110,9 +103,10 @@ else:
     os.makedirs(BULK_DIR, exist_ok=True)
 
     # Make the slurm job
-    BULK_SLURM_JOB_PATH = os.path.join(BULK_DIR, 'run_qe.sh')
+    BULK_SLURM_JOB_PATH = os.path.abspath(os.path.join(BULK_DIR, 'run_qe.sh'))
     BULK_PY_PATH_SRC = os.path.abspath(os.path.join(os.path.dirname(__file__), 'basepys', 'bulk.py'))
     BULK_PY_PATH_DST = os.path.join(BULK_DIR, 'bulk.py')
+    
     bulk_job_script = job_manager.SlurmJobFile(full_path=BULK_SLURM_JOB_PATH)
     bulk_job_script.settings = {
         '--job-name': 'S1_BULK',
@@ -125,8 +119,12 @@ else:
     bulk_job_script.write_file()
 
     # start the slurm job
-    bulk_job = job_manager.SlurmJob()
-    bulk_cmd = f"sbatch {BULK_SLURM_JOB_PATH}"
+    if job_manager_type == 'SLURM': 
+        bulk_job = job_manager.SlurmJob()
+        bulk_cmd = f"sbatch {BULK_SLURM_JOB_PATH}"
+    elif job_manager_type.lower() == 'default':
+        bulk_job = job_manager.DefaultJob()
+        bulk_cmd = f"/bin/bash {BULK_SLURM_JOB_PATH}"
     os.chdir(BULK_DIR)
     bulk_job.submit(bulk_cmd)
     os.chdir(START_DIR)
@@ -148,7 +146,7 @@ else:
     os.makedirs(ADS_DIR, exist_ok=True)
 
     # Make the slurm job
-    ADS_SLURM_JOB_PATH = os.path.join(ADS_DIR, 'run_qe.sh')
+    ADS_SLURM_JOB_PATH = os.path.abspath(os.path.join(ADS_DIR, 'run_qe.sh'))
     ADS_PY_PATH_SRC = os.path.abspath(os.path.join(os.path.dirname(__file__), 'basepys', 'adsorbate.py'))
     # print(f'ADS_PY_PATH_SRC: {ADS_PY_PATH_SRC}')
     ADS_PY_PATH_DST = os.path.join(ADS_DIR, 'adsorbate.py')
@@ -164,8 +162,12 @@ else:
     ads_job_script.write_file()
 
     # start the slurm job
-    ads_job = job_manager.SlurmJob()
-    ads_cmd = f"sbatch {ADS_SLURM_JOB_PATH}"
+    if job_manager_type == 'SLURM': 
+        ads_job = job_manager.SlurmJob()
+        ads_cmd = f"sbatch {ADS_SLURM_JOB_PATH}"
+    elif job_manager_type.lower() == 'default':
+        ads_job = job_manager.DefaultJob()
+        ads_cmd = f"/bin/bash {ADS_SLURM_JOB_PATH}"
     os.chdir(ADS_DIR)
     ads_job.submit(ads_cmd)
     os.chdir(START_DIR)
@@ -175,6 +177,8 @@ else:
 # Depends on 1
 logger.info('3. Compute Slab Geometry')
 os.makedirs(os.path.join(BASE_DIR, 's3_slab'), exist_ok=True)
+
+bulk_job.wait()
 
 
 ############################################################################
