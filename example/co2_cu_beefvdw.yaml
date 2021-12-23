@@ -1,4 +1,4 @@
-pseudos_dir: /home/moon/espresso/pseudos
+PSEUDOS_DIR: /home/moon/espresso/pseudos
 adsorbate: CO2
 adsorbate_file: /home/moon/dft_adsorption/adsorbates/CO2.xyz
 crystal_structure: fcc
@@ -18,11 +18,16 @@ kpts_slab: !!python/tuple
 - 1
 lattice_constant_guess: 3.6
 metal: Cu
+slab_size: !!python/tuple
+- 3
+- 3
+- 3
 pseudopotentials:
   C: C_ONCV_PBE-1.2.upf
   Cu: Cu_ONCV_PBE-1.2.upf
   O: O_ONCV_PBE-1.2.upf
 site: top
 vacuum_ads: 7.5
+vacuum_slab: 10.0
 
 

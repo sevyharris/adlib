@@ -3,6 +3,7 @@
 # 2021-12-03
 
 import os
+from shutil import copyfile
 import sys
 import yaml
 from time import time
@@ -17,7 +18,7 @@ with open(settings_file) as f:
     settings = yaml.load(f, Loader=yaml.FullLoader)
 
 BULK_DIR = settings['BULK_DIR']
-logfile = os.path.join(BULK_DIR, 'ase.log')
+logfile = os.path.abspath(os.path.join(BULK_DIR, 'ase.log'))
 
 # N_CPUS = 4
 # PW_EXEC = '/shared/centos7/q-e/q-e-qe-6.2.0-gcc7/bin/pw.x'
@@ -27,12 +28,12 @@ logfile = os.path.join(BULK_DIR, 'ase.log')
 # os.environ['ASE_ESPRESSO_COMMAND'] = f'mpirun -np {N_CPUS} {PW_EXEC} -in PREFIX.pwi > PREFIX.pwo'
 
 metal = settings['metal']
-cu_bulk = bulk(settings['metal'],
-               crystalstructure=settings['crystal_structure'],
-               a=settings['lattice_constant_guess'],
-               cubic=True
+cu_bulk = bulk(
+    settings['metal'],
+    crystalstructure=settings['crystal_structure'],
+    a=settings['lattice_constant_guess'],
+    cubic=True
 )
-
 
 forc_conv_thr = settings['forc_conv_thr_eVA'] / 51.42208619083232
 espresso_settings = {
@@ -58,18 +59,24 @@ espresso_settings = {
 if settings['dft_functional'].lower() != 'default':
     espresso_settings['system']['input_dft'] = settings['dft_functional']
 
-bulk_calc = Espresso(pseudopotentials=settings['pseudopotentials'],
-                     tstress=True,
-                     tprnfor=True,
-                     kpts=settings['kpts_bulk'],
-                     pseudo_dir=settings['pseudos_dir'],
-                     input_data=espresso_settings,
-                     directory=BULK_DIR)
+bulk_calc = Espresso(
+    pseudopotentials=settings['pseudopotentials'],
+    tstress=True,
+    tprnfor=True,
+    kpts=settings['kpts_bulk'],
+    pseudo_dir=settings['PSEUDOS_DIR'],
+    input_data=espresso_settings,
+    directory=BULK_DIR
+)
+
 cu_bulk.calc = bulk_calc
 cu_bulk.get_potential_energy()
+
+# copy the file
+copyfile(os.path.abspath(os.path.join(BULK_DIR, 'espresso.pwo')), settings['BULK_FILE'])
 
 end = time()
 duration = end - start
 
 with open(logfile, 'a') as f:
-    f.write(f'Completed in {duration} seconds')
+    f.write(f'Completed in {duration} seconds\n')
