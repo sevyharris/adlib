@@ -22,32 +22,27 @@ with open(settings_file) as f:
 ADS_DIR = settings['ADS_DIR']
 logfile = os.path.abspath(os.path.join(ADS_DIR, 'ase.log'))
 
-espresso_settings = {
-    'control': {
-        'calculation': 'scf',
-    },
-    'system': {
-        'ecutwfc': 50,
-        'ecutrho': 500
-    },
-    'ions': {
-        'ion_dynamics': 'bfgs'
-    },
-}
 
-if settings['dft_functional'].lower() != 'default':
-    espresso_settings['system']['input_dft'] = settings['dft_functional']
+espresso_settings = settings['ads_espresso_settings']
+# remove everything that has 'default' as the value
+for category_key in espresso_settings.keys():
+    keys_to_remove = []
+    for setting_key in espresso_settings[category_key].keys():
+        if espresso_settings[category_key][setting_key] == 'default':
+            keys_to_remove.append(setting_key)
+    for key in keys_to_remove:
+        espresso_settings[category_key].pop(key)
 
 
 adsorbate = read(settings['adsorbate_file'])
 adsorbate.center(vacuum=settings['vacuum_ads'])
 
+# Restart if available
 traj_file = os.path.abspath(os.path.join(ADS_DIR, 'ads.traj'))
 if os.path.exists(traj_file):
     traj = Trajectory(traj_file)
     if len(traj) > 0:
         adsorbate = traj[-1]
-
 
 ads_calc = Espresso(
     pseudopotentials=settings['pseudopotentials'],

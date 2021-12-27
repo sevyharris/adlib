@@ -36,7 +36,7 @@ try:
     force_recalc = input_settings['force_recalc']
 except KeyError:
     force_recalc = False
-# force_recalc = True
+force_recalc = True
 
 try:
     job_manager_type = input_settings['job_manager']
@@ -94,9 +94,14 @@ SLAB_SLURM_JOB_PATH = os.path.abspath(os.path.join(SLAB_DIR, 'run_qe.sh'))
 SLAB_PY_PATH_SRC = os.path.abspath(os.path.join(os.path.dirname(__file__), 'basepys', 'slab.py'))
 SLAB_PY_PATH_DST = os.path.abspath(os.path.join(SLAB_DIR, 'slab.py'))
 SLAB_PWO_SRC = os.path.abspath(os.path.join(SLAB_DIR, 'espresso.pwo'))
+
+# TODO check for existing slab to skip many steps
+# try:
+#     if os.path.exists(input_settings['SLAB_FILE']):
+# except KeyError or OSError:
+# SLAB_PWO_DST = os.path.abspath(os.path.join(SLAB_DIR, 'slab.pwo'))
 SLAB_PWO_DST = os.path.abspath(os.path.join(SLAB_DIR, 'slab.pwo'))
 input_settings['SLAB_FILE'] = SLAB_PWO_DST
-
 
 settings_file = os.path.join(BASE_DIR, 'settings.yaml')
 logger.info(f'Creating setting file {settings_file}')
@@ -106,13 +111,21 @@ logger.info(f'Settings:\n{input_settings}')
 with open(settings_file, 'w') as f:
     yaml.dump(input_settings, f, sort_keys=True)
 
-
-# TODO check for existing slab/bulk file
+############################################################################
+# Skip step 1 if there's a slab file to use
+use_existing_slab = False
+if os.path.exists(SLAB_PWO_DST) and not force_recalc:
+    # try to read in the adsorbate
+    with open(SLAB_PWO_DST, 'r') as f:
+        slab_traj = list(read_espresso_out(f, index=slice(None)))
+        f.seek(0)
+        for line in f:
+            if 'JOB DONE' in line:
+                use_existing_slab = True
 
 ############################################################################
 # Step 1. Compute Bulk Lattice Constant
 # Make the slurm job
-
 use_existing_bulk = False
 if os.path.exists(BULK_PWO_DST) and not force_recalc:
     # try to read in the bulk lattice
@@ -157,6 +170,7 @@ else:
     os.chdir(BULK_DIR)
     bulk_job.submit(bulk_cmd)
     os.chdir(START_DIR)
+
 
 ############################################################################
 # Step 2. Compute Adsorbate Geometry
@@ -203,7 +217,7 @@ else:
     ads_job.submit(ads_cmd)
     os.chdir(START_DIR)
 
-exit(0)
+
 ############################################################################
 # Step 3. Compute Slab Geometry
 # Depends on 1
@@ -212,17 +226,6 @@ os.makedirs(os.path.join(BASE_DIR, 's3_slab'), exist_ok=True)
 
 if not use_existing_bulk:
     bulk_job.wait()
-
-# read in previous bulk file
-use_existing_slab = False
-if os.path.exists(SLAB_PWO_DST) and not force_recalc:
-    # try to read in the adsorbate
-    with open(SLAB_PWO_DST, 'r') as f:
-        slab_traj = list(read_espresso_out(f, index=slice(None)))
-        f.seek(0)
-        for line in f:
-            if 'JOB DONE' in line:
-                use_existing_slab = True
 
 if use_existing_slab:
     slab_energy = slab_traj[-1].get_potential_energy()

@@ -35,29 +35,17 @@ cu_bulk = bulk(
     cubic=True
 )
 
-forc_conv_thr = settings['forc_conv_thr_eVA'] / 51.42208619083232
-espresso_settings = {
-    'control': {
-        'calculation': 'vc-relax',
-        'forc_conv_thr': forc_conv_thr,
-    },
-    'system': {
-        'occupations': 'smearing',  # required for metals
-        'degauss': 0.1,
-        'ecutwfc': settings['ecutwfc'],  # 50
-        'ecutrho': settings['ecutrho'],  # 500
-    },
-    'ions': {
-        'ion_dynamics': 'bfgs'
-    },
-    'cell': {
-        'cell_dynamics': 'bfgs',
-        'press': 0.0,
-        'press_conv_thr': 0.5,
-    }
-}
-if settings['dft_functional'].lower() != 'default':
-    espresso_settings['system']['input_dft'] = settings['dft_functional']
+espresso_settings = settings['bulk_espresso_settings']
+espresso_settings['control']['forc_conv_thr'] = settings['forc_conv_thr_eVA'] / 51.42208619083232
+
+# remove everything that has 'default' as the value
+for category_key in espresso_settings.keys():
+    keys_to_remove = []
+    for setting_key in espresso_settings[category_key].keys():
+        if espresso_settings[category_key][setting_key] == 'default':
+            keys_to_remove.append(setting_key)
+    for key in keys_to_remove:
+        espresso_settings[category_key].pop(key)
 
 bulk_calc = Espresso(
     pseudopotentials=settings['pseudopotentials'],

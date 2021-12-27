@@ -58,22 +58,7 @@ for i, pos in enumerate(metal_slab.get_positions()):
 fix_bottom_layer = FixAtoms(indices=bottom_layer)
 metal_slab.set_constraint(fix_bottom_layer)
 
-
-# forc_conv_thr = settings['forc_conv_thr_eVA'] / 51.42208619083232
-espresso_settings = {
-    'control': {
-        'calculation': 'scf',
-    },
-    'system': {
-        'occupations': 'smearing',  # required for metals
-        'degauss': 0.1,
-        'ecutwfc': settings['ecutwfc'],
-        'ecutrho': settings['ecutrho']
-    },
-    'ions': {
-        'ion_dynamics': 'bfgs'
-    },
-}
+espresso_settings = settings['slab_espresso_settings']
 
 calc = Espresso(
     pseudopotentials=settings['pseudopotentials'],
