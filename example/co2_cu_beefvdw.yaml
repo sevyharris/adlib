@@ -75,4 +75,6 @@ slab_espresso_settings:
     ion_dynamics: bfgs
 
 # 4. Place the Adsorbate
-
+N_heights: 8
+min_height_A: 2
+max_height_A: 7

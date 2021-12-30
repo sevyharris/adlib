@@ -104,6 +104,25 @@ class AdsorptionCalculation():
         with open(self.settings_file, 'w') as f:
             yaml.dump(self.input_settings, f, sort_keys=True)
 
+    def make_bulk_files(self, queue_type='SLURM'):
+        """
+        Generates the python and bash scripts to run the bulk calculation
+        """
+        if queue_type == 'SLURM':
+            bulk_job_script = job_manager.SlurmJobFile(full_path=self.BULK_SLURM_JOB_PATH)
+            bulk_job_script.settings = {
+                '--job-name': 'S1_BULK',
+                '--partition': 'west,short',
+                '--mem': '4Gb',     # max memory was 442252K
+                '--time': '24:00:00',
+            }
+        else:
+            bulk_job_script = job_manager.CobaltJobFile(full_path=self.BULK_SLURM_JOB_PATH)
+
+        bulk_job_script.content.append(f'cp {self.BULK_PY_PATH_SRC} {self.BULK_PY_PATH_DST}\n')
+        bulk_job_script.content.append(f'python {self.BULK_PY_PATH_DST} {self.settings_file}\n')
+        bulk_job_script.write_file()
+
     def calc_bulk(self, force_recalc=False):
         """
         User's responsibility to check for existing slab

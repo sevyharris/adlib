@@ -6,11 +6,11 @@
 import os
 import sys
 import logging
+import numpy as np
 import yaml
 from ase.io.espresso import read_espresso_out
 
 import job_manager
-
 
 START_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -125,51 +125,51 @@ if os.path.exists(SLAB_PWO_DST) and not force_recalc:
 
 ############################################################################
 # Step 1. Compute Bulk Lattice Constant
-# Make the slurm job
-use_existing_bulk = False
-if os.path.exists(BULK_PWO_DST) and not force_recalc:
-    # try to read in the bulk lattice
-    with open(BULK_PWO_DST, 'r') as f:
-        bulk_traj = list(read_espresso_out(f, index=slice(None)))
-        f.seek(0)
-        for line in f:
-            if 'JOB DONE' in line:
-                use_existing_bulk = True
-                break
+if not use_existing_slab:
+    use_existing_bulk = False
+    if os.path.exists(BULK_PWO_DST) and not force_recalc:
+        # try to read in the bulk lattice
+        with open(BULK_PWO_DST, 'r') as f:
+            bulk_traj = list(read_espresso_out(f, index=slice(None)))
+            f.seek(0)
+            for line in f:
+                if 'JOB DONE' in line:
+                    use_existing_bulk = True
+                    break
 
-if use_existing_bulk:
-    initial_energy = bulk_traj[-1].get_potential_energy()
-    lattice_constant = bulk_traj[-1].cell[0][0]
+    if use_existing_bulk:
+        initial_energy = bulk_traj[-1].get_potential_energy()
+        lattice_constant = bulk_traj[-1].cell[0][0]
 
-    logger.info('1. Use existing bulk lattice constant')
-    logger.info(f"Initial Energy: {initial_energy}")
-    logger.info(f"Lattice constant: {lattice_constant}")
-else:
-    logger.info('1. Compute bulk lattice constant')
-    os.makedirs(BULK_DIR, exist_ok=True)
+        logger.info('1. Use existing bulk lattice constant')
+        logger.info(f"Initial Energy: {initial_energy}")
+        logger.info(f"Lattice constant: {lattice_constant}")
+    else:
+        logger.info('1. Compute bulk lattice constant')
+        os.makedirs(BULK_DIR, exist_ok=True)
 
-    bulk_job_script = job_manager.SlurmJobFile(full_path=BULK_SLURM_JOB_PATH)
-    bulk_job_script.settings = {
-        '--job-name': 'S1_BULK',
-        '--partition': 'west,short',
-        '--mem': '4Gb',     # max memory was 442252K
-        '--time': '24:00:00',
-    }
-    bulk_job_script.content.append(f'cp {BULK_PY_PATH_SRC} {BULK_PY_PATH_DST}\n')
-    bulk_job_script.content.append(f'python {BULK_PY_PATH_DST} {settings_file}\n')
-    # bulk_job_script.content.append(f'cp {BULK_PWO_SRC} {BULK_PWO_DST}\n')
-    bulk_job_script.write_file()
+        bulk_job_script = job_manager.SlurmJobFile(full_path=BULK_SLURM_JOB_PATH)
+        bulk_job_script.settings = {
+            '--job-name': 'S1_BULK',
+            '--partition': 'west,short',
+            '--mem': '4Gb',     # max memory was 442252K
+            '--time': '24:00:00',
+        }
+        bulk_job_script.content.append(f'cp {BULK_PY_PATH_SRC} {BULK_PY_PATH_DST}\n')
+        bulk_job_script.content.append(f'python {BULK_PY_PATH_DST} {settings_file}\n')
+        # bulk_job_script.content.append(f'cp {BULK_PWO_SRC} {BULK_PWO_DST}\n')
+        bulk_job_script.write_file()
 
-    # start the slurm job
-    if job_manager_type == 'SLURM':
-        bulk_job = job_manager.SlurmJob()
-        bulk_cmd = f"sbatch {BULK_SLURM_JOB_PATH}"
-    elif job_manager_type.lower() == 'default':
-        bulk_job = job_manager.DefaultJob()
-        bulk_cmd = f"/bin/bash {BULK_SLURM_JOB_PATH}"
-    os.chdir(BULK_DIR)
-    bulk_job.submit(bulk_cmd)
-    os.chdir(START_DIR)
+        # start the slurm job
+        if job_manager_type == 'SLURM':
+            bulk_job = job_manager.SlurmJob()
+            bulk_cmd = f"sbatch {BULK_SLURM_JOB_PATH}"
+        elif job_manager_type.lower() == 'default':
+            bulk_job = job_manager.DefaultJob()
+            bulk_cmd = f"/bin/bash {BULK_SLURM_JOB_PATH}"
+        os.chdir(BULK_DIR)
+        bulk_job.submit(bulk_cmd)
+        os.chdir(START_DIR)
 
 
 ############################################################################
@@ -224,14 +224,15 @@ else:
 logger.info('3. Compute Slab Geometry')
 os.makedirs(os.path.join(BASE_DIR, 's3_slab'), exist_ok=True)
 
-if not use_existing_bulk:
-    bulk_job.wait()
-
 if use_existing_slab:
     slab_energy = slab_traj[-1].get_potential_energy()
     logger.info('3. Use existing slab geometry')
     logger.info(f"Energy: {slab_energy}")
+
 else:
+    if not use_existing_bulk:
+        bulk_job.wait()
+
     logger.info('3. Compute Slab Geometry')
     os.makedirs(SLAB_DIR, exist_ok=True)
 
@@ -263,8 +264,27 @@ else:
 # Step 4. Place Adsorbate
 # Depends on 2 and 3
 logger.info('4. Place Adsorbate')
-# os.makedirs(os.path.join(BASE_DIR, 's4_ads_height'), exist_ok=True)
+os.makedirs(PLACE_ADS_DIR, exist_ok=True)
 
+# TODO check if we need to wait on any processes
+heights = np.linspace(
+    input_settings['min_height_A'],
+    input_settings['max_height_A'],
+    input_settings['N_heights']
+)
+for i, height in enumerate(heights):
+    os.makedirs(os.path.join(PLACE_ADS_DIR, f'run_{i}'))
+    # place_ads_job_script = job_manager.SlurmJobFile(full_path=SLAB_SLURM_JOB_PATH)
+    # slab_job_script.settings = {
+    #     '--job-name': 'S3_SLAB',
+    #     '--partition': 'west,short',
+    #     '--mem': '20Gb',     # max memory TBD
+    #     '--time': '24:00:00',
+    # }
+    # slab_job_script.content.append(f'cp {SLAB_PY_PATH_SRC} {SLAB_PY_PATH_DST}\n')
+    # slab_job_script.content.append(f'python {SLAB_PY_PATH_DST} {settings_file}\n')
+    # # slab_job_script.content.append(f'cp {SLAB_PWO_SRC} {SLAB_PWO_DST}\n')
+    # slab_job_script.write_file()
 
 ############################################################################
 # Step 5. Compute System Geometry

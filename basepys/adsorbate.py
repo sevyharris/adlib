@@ -3,6 +3,7 @@
 # 2021-12-03
 
 import os
+import shutil
 import sys
 import yaml
 from shutil import copyfile
@@ -12,6 +13,8 @@ from ase import Atoms
 from ase.io import read
 from ase.optimize import BFGS
 from ase.io.trajectory import Trajectory
+from ase.io.ulm import InvalidULMFileError
+
 
 start = time()
 # read in the settings
@@ -40,9 +43,13 @@ adsorbate.center(vacuum=settings['vacuum_ads'])
 # Restart if available
 traj_file = os.path.abspath(os.path.join(ADS_DIR, 'ads.traj'))
 if os.path.exists(traj_file):
-    traj = Trajectory(traj_file)
-    if len(traj) > 0:
-        adsorbate = traj[-1]
+    try:
+        traj = Trajectory(traj_file)
+        if len(traj) > 0:
+            adsorbate = traj[-1]
+    except InvalidULMFileError:
+        # traj file is empty. delete it.
+        os.remove(traj_file)
 
 ads_calc = Espresso(
     pseudopotentials=settings['pseudopotentials'],
