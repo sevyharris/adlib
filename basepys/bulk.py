@@ -9,7 +9,8 @@ import yaml
 from time import time
 from ase.build import bulk
 from ase.calculators.espresso import Espresso
-
+from ase.calculators.socketio import SocketIOCalculator
+import socket
 
 start = time()
 # read in the settings
@@ -47,7 +48,13 @@ for category_key in espresso_settings.keys():
     for key in keys_to_remove:
         espresso_settings[category_key].pop(key)
 
-bulk_calc = Espresso(
+
+pw_executable = settings['pw_executable']
+port = 30141
+hostname = socket.gethostname()
+
+espresso = Espresso(
+    command=f'{pw_executable} -in PREFIX.pwi --ipi {hostname}:{port} > PREFIX.pwo',
     pseudopotentials=settings['pseudopotentials'],
     tstress=True,
     tprnfor=True,
@@ -57,8 +64,10 @@ bulk_calc = Espresso(
     directory=BULK_DIR
 )
 
-cu_bulk.calc = bulk_calc
-cu_bulk.get_potential_energy()
+with SocketIOCalculator(espresso, log=sys.stdout) as calc:
+    cu_bulk.calc = calc
+    cu_bulk.get_potential_energy()
+
 
 # copy the file
 copyfile(os.path.abspath(os.path.join(BULK_DIR, 'espresso.pwo')), settings['BULK_FILE'])

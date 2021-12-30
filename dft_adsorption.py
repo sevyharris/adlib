@@ -9,6 +9,7 @@ import logging
 import numpy as np
 import yaml
 from ase.io.espresso import read_espresso_out
+from shutil import copyfile
 
 import job_manager
 
@@ -99,6 +100,16 @@ class AdsorptionCalculation():
         self.settings_file = os.path.join(self.BASE_DIR, 'settings.yaml')
         self.logger.info(f'Creating setting file {self.settings_file}')
 
+        # read the PW executable, settings file overrides the environment variable
+        try:
+            pw_executable = self.input_settings['pw_executable']
+        except KeyError:
+            try:
+                pw_executable = os.environ['PW_EXECUTABLE']
+            except KeyError:
+                raise('must specify PW_EXECUTABLE as an environment variable or in the settings yaml')
+        self.input_settings['pw_executable'] = pw_executable
+
         # TODO mpi settings
         self.logger.info(f'Settings:\n{self.input_settings}')
         with open(self.settings_file, 'w') as f:
@@ -108,6 +119,9 @@ class AdsorptionCalculation():
         """
         Generates the python and bash scripts to run the bulk calculation
         """
+        os.makedirs(self.BULK_DIR, exist_ok=True)
+        copyfile(self.BULK_PY_PATH_SRC, self.BULK_PY_PATH_DST)
+
         if queue_type == 'SLURM':
             bulk_job_script = job_manager.SlurmJobFile(full_path=self.BULK_SLURM_JOB_PATH)
             bulk_job_script.settings = {
@@ -119,7 +133,6 @@ class AdsorptionCalculation():
         else:
             bulk_job_script = job_manager.CobaltJobFile(full_path=self.BULK_SLURM_JOB_PATH)
 
-        bulk_job_script.content.append(f'cp {self.BULK_PY_PATH_SRC} {self.BULK_PY_PATH_DST}\n')
         bulk_job_script.content.append(f'python {self.BULK_PY_PATH_DST} {self.settings_file}\n')
         bulk_job_script.write_file()
 
