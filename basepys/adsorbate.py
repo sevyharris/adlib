@@ -1,14 +1,16 @@
-# Module to compute the bulk lattice constant
+# Module to compute isolated adsorbate geometry/energy
 # Sevy Harris
-# 2021-12-03
+# 2022-01-05
 
+import glob
 import os
 import shutil
 import sys
-import yaml
+import socket
 from shutil import copyfile
 from time import time
 from ase.calculators.espresso import Espresso
+from ase.calculators.socketio import SocketIOCalculator
 from ase import Atoms
 from ase.io import read
 from ase.optimize import BFGS
@@ -17,31 +19,51 @@ from ase.io.ulm import InvalidULMFileError
 
 
 start = time()
-# read in the settings
-settings_file = sys.argv[1]
-with open(settings_file) as f:
-    settings = yaml.load(f, Loader=yaml.FullLoader)
-
-ADS_DIR = settings['ADS_DIR']
-logfile = os.path.abspath(os.path.join(ADS_DIR, 'ase.log'))
+logfile = 'ase.log'
 
 
-espresso_settings = settings['ads_espresso_settings']
-# remove everything that has 'default' as the value
-for category_key in espresso_settings.keys():
-    keys_to_remove = []
-    for setting_key in espresso_settings[category_key].keys():
-        if espresso_settings[category_key][setting_key] == 'default':
-            keys_to_remove.append(setting_key)
-    for key in keys_to_remove:
-        espresso_settings[category_key].pop(key)
+# Assume there is only one .xyz file in the folder
+this_dir = os.path.dirname(os.path.abspath(__file__))
+
+files = glob.glob(os.path.join(this_dir, "*.xyz"))
+if len(files) > 1:
+    print("multiple xyz's")
+
+fmax = 0.001  # eV/A
+vacuum = 15.0   # A
+adsorbate_file = files[0]
+adsorbate = read(adsorbate_file)
+adsorbate.center(vacuum=vacuum)
 
 
-adsorbate = read(settings['adsorbate_file'])
-adsorbate.center(vacuum=settings['vacuum_ads'])
+espresso_settings = {
+    'control': {
+        'disk_io': 'none',
+        'calculation': 'scf',
+    },
+    'system': {
+        'input_dft': 'BEEF-VDW',
+        'occupations': 'smearing',
+        'degauss': 0.1,
+        'ecutwfc': 100,
+        'ecutrho': 500,
+    },
+}
+
+
+
+hostname = socket.gethostname()
+port = 31415  # the default port
+pw_executable = os.environ['PW_EXECUTABLE']
+pseudopotentials = {
+    'C': 'C_ONCV_PBE-1.2.upf',
+    'Cu': 'Cu_ONCV_PBE-1.2.upf',
+    'O': 'O_ONCV_PBE-1.2.upf',
+}
+
 
 # Restart if available
-traj_file = os.path.abspath(os.path.join(ADS_DIR, 'ads.traj'))
+traj_file = 'ads.traj'
 if os.path.exists(traj_file):
     try:
         traj = Trajectory(traj_file)
@@ -51,25 +73,31 @@ if os.path.exists(traj_file):
         # traj file is empty. delete it.
         os.remove(traj_file)
 
-ads_calc = Espresso(
-    pseudopotentials=settings['pseudopotentials'],
+
+#aprun -n 4 -N 1 pw.x -nk 4 --ipi {host}:{port} --in PREFIX.pwi > PREFIX.out
+command = f'aprun -n 4 {pw_executable} -in PREFIX.pwi --ipi {hostname}:{port} -nk 4 > PREFIX.pwo'
+espresso = Espresso(
+    command=command,
+    pseudopotentials=pseudopotentials,
     tstress=True,
     tprnfor=True,
-    kpts=settings['kpts_ads'],
-    pseudo_dir=settings['PSEUDOS_DIR'],
+    kpts=(4, 4, 4),
+    pseudo_dir='/home/sharris1585/espresso/pseudos/',
     input_data=espresso_settings,
-    directory=ADS_DIR
 )
-adsorbate.calc = ads_calc
 
 opt = BFGS(adsorbate, trajectory=traj_file, logfile=logfile)
-opt.run(fmax=settings['forc_conv_thr_eVA'])
+with SocketIOCalculator(espresso, log=sys.stdout) as calc:
+    adsorbate.calc = calc
+    opt.run(fmax)
+
 
 # copy the file
-copyfile(os.path.abspath(os.path.join(ADS_DIR, 'espresso.pwo')), settings['BULK_FILE'])
+shutil.copyfile('espresso.pwo', 'adsorbate.pwo')
 
 end = time()
 duration = end - start
 
 with open(logfile, 'a') as f:
     f.write(f'Completed in {duration} seconds\n')
+
