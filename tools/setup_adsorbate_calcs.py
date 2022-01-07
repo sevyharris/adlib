@@ -44,7 +44,10 @@ with open('run.sh', 'w') as f:
     f.write('module load miniconda-3\n\n')
     
     for python_file in python_files:
+        adsorbate_dir = os.path.dirname(python_file)
+        f.write(f'cd {adsorbate_dir}\n')
         f.write(f'python {python_file} &\n')
+        f.write(f'cd ..\n')
         f.write(f'sleep 5\n\n')
 
     f.write(f'wait\n')

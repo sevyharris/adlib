@@ -46,19 +46,27 @@ espresso_settings = {
         'occupations': 'smearing',
         'degauss': 0.1,
         'ecutwfc': 100,
-        'ecutrho': 500,
+        #'ecutrho': 500,
     },
 }
 
 
 
 hostname = socket.gethostname()
-port = 31415  # the default port
+# port = 31415  # the default port
+
+min_port = 10000
+max_port = 40000
+seed = time() * 100000
+port = int(seed % (max_port - min_port) + min_port)
+
 pw_executable = os.environ['PW_EXECUTABLE']
 pseudopotentials = {
     'C': 'C_ONCV_PBE-1.2.upf',
     'Cu': 'Cu_ONCV_PBE-1.2.upf',
     'O': 'O_ONCV_PBE-1.2.upf',
+    'N': 'N_ONCV_PBE-1.2.upf',
+    'H': 'H_ONCV_PBE-1.2.upf',
 }
 
 
@@ -75,7 +83,8 @@ if os.path.exists(traj_file):
 
 
 #aprun -n 4 -N 1 pw.x -nk 4 --ipi {host}:{port} --in PREFIX.pwi > PREFIX.out
-command = f'aprun -n 4 {pw_executable} -in PREFIX.pwi --ipi {hostname}:{port} -nk 4 > PREFIX.pwo'
+command = f'aprun -n 16 {pw_executable} -in PREFIX.pwi --ipi {hostname}:{port} -nk 4 > PREFIX.pwo'
+print(command)
 espresso = Espresso(
     command=command,
     pseudopotentials=pseudopotentials,
@@ -87,7 +96,7 @@ espresso = Espresso(
 )
 
 opt = BFGS(adsorbate, trajectory=traj_file, logfile=logfile)
-with SocketIOCalculator(espresso, log=sys.stdout) as calc:
+with SocketIOCalculator(espresso, log=sys.stdout, port=port) as calc:
     adsorbate.calc = calc
     opt.run(fmax)
 
