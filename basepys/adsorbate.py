@@ -6,11 +6,11 @@ import glob
 import os
 import shutil
 import sys
-import socket
+#import socket
 from shutil import copyfile
 from time import time
 from ase.calculators.espresso import Espresso
-from ase.calculators.socketio import SocketIOCalculator
+#from ase.calculators.socketio import SocketIOCalculator
 from ase import Atoms
 from ase.io import read
 from ase.optimize import BFGS
@@ -38,7 +38,8 @@ adsorbate.center(vacuum=vacuum)
 
 espresso_settings = {
     'control': {
-        'disk_io': 'none',
+        'verbosity': 'high',
+        #'disk_io': 'none',
         'calculation': 'scf',
     },
     'system': {
@@ -52,13 +53,13 @@ espresso_settings = {
 
 
 
-hostname = socket.gethostname()
+# hostname = socket.gethostname()
 # port = 31415  # the default port
 
-min_port = 10000
-max_port = 40000
-seed = time() * 100000
-port = int(seed % (max_port - min_port) + min_port)
+# min_port = 10000
+# max_port = 40000
+# seed = time() * 100000
+# port = int(seed % (max_port - min_port) + min_port)
 
 pw_executable = os.environ['PW_EXECUTABLE']
 pseudopotentials = {
@@ -83,7 +84,8 @@ if os.path.exists(traj_file):
 
 
 #aprun -n 4 -N 1 pw.x -nk 4 --ipi {host}:{port} --in PREFIX.pwi > PREFIX.out
-command = f'aprun -n 16 {pw_executable} -in PREFIX.pwi --ipi {hostname}:{port} -nk 4 > PREFIX.pwo'
+command = f'mpirun -n 16 {pw_executable} -in PREFIX.pwi -nk 4 > PREFIX.pwo'
+#command = f'aprun -n 16 {pw_executable} -in PREFIX.pwi --ipi {hostname}:{port} -nk 4 > PREFIX.pwo'
 print(command)
 espresso = Espresso(
     command=command,
@@ -91,14 +93,14 @@ espresso = Espresso(
     tstress=True,
     tprnfor=True,
     kpts=(4, 4, 4),
-    pseudo_dir='/home/sharris1585/espresso/pseudos/',
+    pseudo_dir='/home/sevy/espresso/pseudos/',
     input_data=espresso_settings,
 )
 
 opt = BFGS(adsorbate, trajectory=traj_file, logfile=logfile)
-with SocketIOCalculator(espresso, log=sys.stdout, port=port) as calc:
-    adsorbate.calc = calc
-    opt.run(fmax)
+# with SocketIOCalculator(espresso, log=sys.stdout, port=port) as calc:
+adsorbate.calc = espresso
+opt.run(fmax)
 
 
 # copy the file

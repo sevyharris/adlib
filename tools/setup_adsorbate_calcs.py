@@ -4,12 +4,13 @@ import shutil
 
 
 nodes_per_python = 16
-BASE_DIR = os.getcwd()
-input_ads_dir = "/home/sharris1585/dft_adsorption/adsorbates"
+#BASE_DIR = os.getcwd()
+BASE_DIR = "/home/sevy/espresso/adsorbates/"
+input_ads_dir = "/home/sevy/espresso/dft_adsorption/adsorbates"
 xyzs = glob.glob(os.path.join(input_ads_dir, '*.xyz'))
 # or specify the xyzs manually
 
-adsorbate_calculation_file = 'adsorbate.py'
+adsorbate_calculation_file = '/home/sevy/espresso/dft_adsorption/basepys/adsorbate.py'
 
 
 python_files = []
