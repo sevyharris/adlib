@@ -1,0 +1,80 @@
+PSEUDOS_DIR: /home/moon/espresso/pseudos
+adsorbate: CO2
+adsorbate_file: /home/moon/dft_adsorption/adsorbates/CO2.xyz
+crystal_structure: fcc
+dft_functional: &dft_functional BEEF-VDW
+ecutrho: &ecutrho 500
+ecutwfc: &ecutwfc 100
+forc_conv_N: 0
+forc_conv_thr_eVA: 0.001
+kpts_ads: null
+kpts_bulk: !!python/tuple
+- 6
+- 6
+- 6
+kpts_slab: !!python/tuple
+- 6
+- 6
+- 1
+lattice_constant_guess: 3.6
+metal: Cu
+slab_size: !!python/tuple
+- 3
+- 3
+- 3
+pseudopotentials:
+  C: C_ONCV_PBE-1.2.upf
+  Cu: Cu_ONCV_PBE-1.2.upf
+  O: O_ONCV_PBE-1.2.upf
+site: top
+vacuum_ads: 7.5
+vacuum_slab: 10.0
+
+# Quantum Espresso Settings
+# 1. Calculate Lattice Constant
+bulk_espresso_settings:
+  control:
+    # disk_io: none  # set to none for Theta
+    calculation: vc-relax
+    forc_conv_thr: TBD  # this value will be filled in based on forc_conv_thr_eVA
+  system:
+    input_dft: *dft_functional
+    occupations: smearing
+    degauss: 0.1
+    ecutwfc: *ecutwfc
+    ecutrho: *ecutrho
+  ions:
+    ion_dynamics: bfgs
+  cell:
+    cell_dynamics: bfgs
+    press: 0.0
+    press_conv_thr: 0.5
+
+# 2. Calculate Adsorbate Geometry/Energy
+ads_espresso_settings:
+  control:
+    calculation: scf
+  system:
+    input_dft: *dft_functional
+    ecutwfc: *ecutwfc
+    ecutrho: *ecutrho
+  ions:
+    ion_dynamics: bfgs
+
+# 3. Create the Slab from the Lattice Constant
+slab_espresso_settings:
+  control:
+    calculation: scf
+  system:
+    input_dft: *dft_functional
+    ecutwfc: *ecutwfc
+    ecutrho: *ecutrho
+    occupations: smearing
+    degauss: 0.1
+  ions:
+    ion_dynamics: bfgs
+
+# 4. Place the Adsorbate
+N_heights: 8
+min_height_A: 2
+max_height_A: 7
