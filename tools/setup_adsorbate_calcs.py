@@ -5,12 +5,15 @@ import shutil
 
 nodes_per_python = 16
 #BASE_DIR = os.getcwd()
-BASE_DIR = "/home/sevy/espresso/adsorbates/"
-input_ads_dir = "/home/sevy/espresso/dft_adsorption/adsorbates"
+#BASE_DIR = "/home/sevy/espresso/adsorbates/"
+BASE_DIR = "/work/westgroup/harris.se/espresso/adsorbates"
+#input_ads_dir = "/home/sevy/espresso/dft_adsorption/adsorbates"
+input_ads_dir = "/work/westgroup/harris.se/espresso/dft_adsorption/adsorbates"
 xyzs = glob.glob(os.path.join(input_ads_dir, '*.xyz'))
 # or specify the xyzs manually
 
-adsorbate_calculation_file = '/home/sevy/espresso/dft_adsorption/basepys/adsorbate.py'
+#adsorbate_calculation_file = '/home/sevy/espresso/dft_adsorption/basepys/adsorbate.py'
+adsorbate_calculation_file = '/work/westgroup/harris.se/espresso/dft_adsorption/basepys/adsorbate.py'
 
 
 python_files = []
@@ -33,6 +36,7 @@ for xyz in xyzs:
 
 
 total_nodes = nodes_per_python * len(python_files)
+exit(0)
 
 with open('run.sh', 'w') as f:
     f.write('#!/bin/bash\n')

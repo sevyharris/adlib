@@ -84,7 +84,7 @@ if os.path.exists(traj_file):
 
 
 #aprun -n 4 -N 1 pw.x -nk 4 --ipi {host}:{port} --in PREFIX.pwi > PREFIX.out
-command = f'mpirun -n 16 {pw_executable} -in PREFIX.pwi -nk 4 > PREFIX.pwo'
+command = f'mpirun -n 32 {pw_executable} -in PREFIX.pwi -nk 4 > PREFIX.pwo'
 #command = f'aprun -n 16 {pw_executable} -in PREFIX.pwi --ipi {hostname}:{port} -nk 4 > PREFIX.pwo'
 print(command)
 espresso = Espresso(
@@ -93,7 +93,9 @@ espresso = Espresso(
     tstress=True,
     tprnfor=True,
     kpts=(4, 4, 4),
-    pseudo_dir='/home/sevy/espresso/pseudos/',
+    pseudo_dir=os.environ['PSEUDO_DIR'],
+    #pseudo_dir='/home/harris.se/espresso/pseudos/',
+    #pseudo_dir='/home/sevy/espresso/pseudos/',
     input_data=espresso_settings,
 )
 
