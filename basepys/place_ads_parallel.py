@@ -1,7 +1,6 @@
 # should probable specify fcc111 for slab type
 
 import sys
-import yaml
 import os
 from shutil import copyfile
 from ase.build import bulk, fcc111
@@ -18,32 +17,27 @@ from time import time
 
 start = time()
 
-settings_file = sys.argv[1]
-with open(settings_file) as f:
-    settings = yaml.load(f, Loader=yaml.FullLoader)
-
-SLAB_DIR = settings['SLAB_DIR']
 logfile = os.path.abspath(os.path.join(SLAB_DIR, 'ase.log'))
 
-bulk_file = settings['BULK_FILE']
+bulk_file = 'bulk.pwo'
 with open(bulk_file, 'r') as f:
     traj = list(read_espresso_out(f, index=slice(None)))
-initial_energy = traj[-1].get_potential_energy()
 lattice_constant = traj[-1].cell[0][0]
-print(f"Initial Energy: {initial_energy}")
 print(f"Lattice constant: {lattice_constant}")
+
+adsorbate_file = 'adsorbate.pwo'
+with open(bulk_file, 'r') as f:
+    traj = list(read_espresso_out(f, index=slice(None)))
+adsorbate = traj[-1]
 
 
 # Construct the slab + vacuum
-vac = settings['vacuum_slab']
-metal_slab = fcc111(
-    settings['metal'],
-    size=settings['slab_size'],
-    vacuum=vac,
-    a=lattice_constant
-)
+fmax = 0.001  # eV/A
+vacuum = 15
+height = 4.0
+metal_slab = fcc111('Cu', size=(3, 3, 3), vacuum=vacuum, a=lattice_constant)
 
-traj_file = os.path.abspath(os.path.join(SLAB_DIR, 'slab.traj'))
+traj_file = 'slab.traj'
 if os.path.exists(traj_file):
     try:
         traj = Trajectory(traj_file)
@@ -56,34 +50,73 @@ if os.path.exists(traj_file):
 # Fix the bottom layer
 bottom_layer = []
 for i, pos in enumerate(metal_slab.get_positions()):
-    if pos[-1] == vac:
+    if pos[-1] == vacuum:
         print(metal_slab[i])
         bottom_layer.append(metal_slab[i].index)
 
 fix_bottom_layer = FixAtoms(indices=bottom_layer)
 metal_slab.set_constraint(fix_bottom_layer)
 
-espresso_settings = settings['slab_espresso_settings']
 
+# place the adsorbate
+element_priority = ['C', 'O', 'H']  # where does N fit?
+bond_atom_index = -1
+for element in atom_priority:
+    for atom in adsorbate:
+        if atom.symbol == element:
+            bond_atom = atom.index
+            break
+    if bond_atom_index > -1:
+        break
+
+# 'ontop', 'bridge', 'fcc', 'hcp'
+# https://wiki.fysik.dtu.dk/ase/ase/build/surface.html#ase.build.add_adsorbate
+add_adsorbate(metal_slab, adsorbate, height=height, position='ontop', mol_index=bond_atom_index)
+
+write(f'initial_system.xyz', metal_slab)
+
+espresso_settings = {
+    'control': {
+        'verbosity': 'high',
+        'calculation': 'scf',
+    },
+    'system': {
+        'input_dft': 'BEEF-VDW',
+        'occupations': 'smearing',
+        'degauss': 0.1,
+        'ecutwfc': 100,
+    },
+}
+
+pseudopotentials = {
+    'H': 'H_ONCV_PBE-1.2.upf',
+    'C': 'C_ONCV_PBE-1.2.upf',
+    'Cu': 'Cu_ONCV_PBE-1.2.upf',
+    'N': 'N_ONCV_PBE-1.2.upf',
+    'O': 'O_ONCV_PBE-1.2.upf',
+    'Pt': 'Pt_ONCV_PBE-1.2.upf',
+}
+
+pw_executable = os.environ['PW_EXECUTABLE']
 calc = Espresso(
-    pseudopotentials=settings['pseudopotentials'],
+    command=f'{pw_executable} -in PREFIX.pwi > PREFIX.pwo'
+    pseudopotentials=pseudopotentials,
     tstress=True,
     tprnfor=True,
-    kpts=settings['kpts_slab'],
-    pseudo_dir=settings['PSEUDOS_DIR'],
+    kpts=(4, 4, 1),
+    pseudo_dir=os.environ['PSEUDO_DIR'],
     input_data=espresso_settings,
-    directory=SLAB_DIR
 )
 
 metal_slab.calc = calc
 opt = BFGS(metal_slab, logfile=logfile, trajectory=traj_file)
-opt.run(fmax=settings['forc_conv_thr_eVA'])
+opt.run(fmax=fmax)
 
 final_energy = metal_slab.get_potential_energy()
 print(f"Final Energy: {final_energy}")
 
 # copy the file
-copyfile(os.path.abspath(os.path.join(SLAB_DIR, 'espresso.pwo')), settings['SLAB_FILE'])
+copyfile('espresso.pwo', 'adsorbed.pwo')
 
 end = time()
 duration = end - start
