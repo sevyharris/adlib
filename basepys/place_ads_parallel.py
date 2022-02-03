@@ -3,7 +3,7 @@
 import sys
 import os
 from shutil import copyfile
-from ase.build import bulk, fcc111
+from ase.build import bulk, fcc111, add_adsorbate
 from ase.io import read, write
 from ase import Atoms
 from ase.optimize import BFGS
@@ -17,22 +17,22 @@ from time import time
 
 start = time()
 
-logfile = os.path.abspath(os.path.join(SLAB_DIR, 'ase.log'))
+logfile = 'ase.log'
 
-bulk_file = 'bulk.pwo'
+bulk_file = '../bulk.pwo'
 with open(bulk_file, 'r') as f:
     traj = list(read_espresso_out(f, index=slice(None)))
 lattice_constant = traj[-1].cell[0][0]
 print(f"Lattice constant: {lattice_constant}")
 
-adsorbate_file = 'adsorbate.pwo'
+adsorbate_file = '../adsorbate.pwo'
 with open(bulk_file, 'r') as f:
     traj = list(read_espresso_out(f, index=slice(None)))
 adsorbate = traj[-1]
 
 
 # Construct the slab + vacuum
-fmax = 0.001  # eV/A
+fmax = 0.01  # eV/A
 vacuum = 15
 height = 4.0
 metal_slab = fcc111('Cu', size=(3, 3, 3), vacuum=vacuum, a=lattice_constant)
@@ -61,7 +61,7 @@ metal_slab.set_constraint(fix_bottom_layer)
 # place the adsorbate
 element_priority = ['C', 'O', 'H']  # where does N fit?
 bond_atom_index = -1
-for element in atom_priority:
+for element in element_priority:
     for atom in adsorbate:
         if atom.symbol == element:
             bond_atom = atom.index
@@ -84,7 +84,7 @@ espresso_settings = {
         'input_dft': 'BEEF-VDW',
         'occupations': 'smearing',
         'degauss': 0.1,
-        'ecutwfc': 100,
+        'ecutwfc': 30,
     },
 }
 
@@ -99,18 +99,18 @@ pseudopotentials = {
 
 pw_executable = os.environ['PW_EXECUTABLE']
 calc = Espresso(
-    command=f'{pw_executable} -in PREFIX.pwi > PREFIX.pwo'
+    command=f'{pw_executable} -in PREFIX.pwi > PREFIX.pwo',
     pseudopotentials=pseudopotentials,
     tstress=True,
     tprnfor=True,
-    kpts=(4, 4, 1),
+    kpts=(2, 2, 1),
     pseudo_dir=os.environ['PSEUDO_DIR'],
     input_data=espresso_settings,
 )
 
 metal_slab.calc = calc
-opt = BFGS(metal_slab, logfile=logfile, trajectory=traj_file)
-opt.run(fmax=fmax)
+#opt = BFGS(metal_slab, logfile=logfile, trajectory=traj_file)
+#opt.run(fmax=fmax)
 
 final_energy = metal_slab.get_potential_energy()
 print(f"Final Energy: {final_energy}")

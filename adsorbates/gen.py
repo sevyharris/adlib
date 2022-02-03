@@ -75,6 +75,12 @@ def gen_CH4():
     ch4 = g2['CH4']
     write('CH4.xyz', ch4)
 
+def gen_C2H4():
+    # ch4 = Atoms('CH4')
+    c2h4 = g2['C2H4']
+    write('C2H4.xyz', c2h4)
+
+
 
 if __name__ == '__main__':
     gen_CO2()
@@ -87,3 +93,5 @@ if __name__ == '__main__':
     gen_OH()
     gen_N2()
     gen_CH4()
+    gen_C2H4()
+
