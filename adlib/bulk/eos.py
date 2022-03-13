@@ -50,19 +50,27 @@ import sys
 import numpy as np
 
 
+def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.05):
+    """
+    script to set up N jobs
 
-def setup_eos_coarse(bulk_dir, lattice_constant):
-    pass
+    N = number of steps/jobs at which to compute enregy
+    half_range is half of the domain of the lattice constant guess
+        for example, if my guess for lattice constant is 4.0, and I want to
+        compute energies for lattice constants ranging from 3.5 - 4.5,
+        then half_range should be set to 0.5 Angstroms
+    """
+    eos_dir = os.path.join(bulk_dir, 'eos')
+    os.makedirs(eos_dir, exist_ok=True)
 
-def setup_eos_fine(bulk_dir, lattice_constant):
-    pass
+    deltas = np.linspace(-half_range, half_range, N)
+    lattice_constants = deltas + lattice_constant_guess
 
+    for i, lattice_constant in enumerate(lattice_constants):
+        calc_dir = os.path.join(eos_dir, f'run_{i:04}')
+        make_scf_calc_file(calc_dir, lattice_constant, metal=metal, ecutwfc=1000, kpt=9, smear=0.1, nproc=16)
 
-def setup_energy_calc(calc_dir, lattice_constant, array_job=True):
-    os.makedirs(calc_dir, exist_ok=True)
-    make_scf_calc_file(calc_dir, lattice_constant, ecutwfc=1000, kpt=9, smear=0.1, nproc=16)
-    if not array_job:
-        make_scf_run_file(calc_dir)
+    make_scf_run_file_array(eos_dir, i)
 
 
 def make_scf_run_file(calc_dir, nproc=16):
@@ -85,20 +93,26 @@ def make_scf_run_file(calc_dir, nproc=16):
 
 def make_scf_run_file_array(dest_dir, N_runs):
     bash_filename = os.path.join(dest_dir, 'run_qe_jobs.sh')
-    run_i_dir = os.path.abspath(os.path.join(dest_dir, 'run$SLURM_ARRAY_TASK_ID'))
+    run_i_dir = os.path.abspath(os.path.join(dest_dir, 'run_$RUN_i'))
     # write the array job file
     with open(bash_filename, 'w') as f:
         f.write('#!/bin/bash\n\n')
         f.write('#SBATCH --time=24:00:00\n')
-        f.write('#SBATCH --job-name=bulk_energy\n')
+        f.write('#SBATCH --job-name=bulk_eos\n')
         f.write('#SBATCH --mem=40Gb\n')
         f.write('#SBATCH --cpus-per-task=1\n')
         f.write('#SBATCH --ntasks=16\n')
         f.write('#SBATCH --partition=short,west\n')
         f.write(f'#SBATCH --array=0-{N_runs - 1}\n\n')
+
+
+        f.write('# create a variable that includes leading zeros\n')
+        f.write('RUN_i=$(printf "%04.0f" $SLURM_ARRAY_TASK_ID)\n')
+
         f.write('module load gcc/10.1.0\n')
         f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
         f.write('module load scalapack/2.1.0-skylake\n\n')
+
         f.write(f'cd {run_i_dir}\n')
         f.write(f'python calc.py\n')
 
@@ -168,7 +182,18 @@ def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', ecutwfc=1000, kpt
         "    f.write(f'Completed in {duration} seconds\\n')",
         "",
     ]
-
+    os.makedirs(calc_dir, exist_ok=True)
     calc_filename = os.path.join(calc_dir, f'calc.py')
     with open(calc_filename, 'w') as f:
         f.writelines([line + '\n' for line in python_file_lines])
+
+
+def run_eos(bulk_dir):
+    import job_manager
+    calc_dir = os.path.join(bulk_dir, 'eos')
+    cur_dir = os.getcwd()
+    os.chdir(calc_dir)
+    eos_job = job_manager.SlurmJob()
+    cmd = "sbatch run_qe_jobs.sh"
+    eos_job.submit(cmd)
+    os.chdir(cur_dir)
