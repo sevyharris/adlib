@@ -4,10 +4,10 @@ from setuptools import setup, find_packages
 HERE = pathlib.Path(__file__).parent
 
 VERSION = '0.1.0'
-PACKAGE_NAME = 'dft_adsorption'
+PACKAGE_NAME = 'adlib'
 AUTHOR = 'Sevy Harris'
 AUTHOR_EMAIL = 'sevy.harris@gmail.com'
-URL = 'https://github.com/sevyharris/dft_adsorption'
+URL = 'https://github.com/sevyharris/adlib'
 
 LICENSE = 'MIT License'
 DESCRIPTION = 'Manager for computing dft adsorption energy in ASE and Quantum Espresso'
