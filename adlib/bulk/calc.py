@@ -1,10 +1,6 @@
 """
 Module for setting up and running bulk energy calculations in Quantum Espresso
 
-produces equation of state - Energy vs. lattice constant
-
-Expects/creates the following directory structure:
-
 bulk
 ____bulk.pwo
 ____vc_relax
@@ -50,13 +46,13 @@ from matplotlib import pyplot as plt
 from ase.io.espresso import read_espresso_out
 
 
-def make_scf_run_file(calc_dir, nproc=16):
+def make_scf_run_file(calc_dir, nproc=16, job_name='bulk_energy'):
     bash_filename = os.path.join(calc_dir, 'run.sh')
     # write the array job file
     with open(bash_filename, 'w') as f:
         f.write('#!/bin/bash\n\n')
         f.write('#SBATCH --time=24:00:00\n')
-        f.write('#SBATCH --job-name=bulk_energy\n')
+        f.write(f'#SBATCH --job-name={job_name}\n')
         f.write('#SBATCH --mem=40Gb\n')
         f.write('#SBATCH --cpus-per-task=1\n')
         f.write(f'#SBATCH --ntasks={nproc}\n')
@@ -68,14 +64,14 @@ def make_scf_run_file(calc_dir, nproc=16):
         f.write(f'python calc.py\n')
 
 
-def make_scf_run_file_array(dest_dir, N_runs):
+def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy'):
     bash_filename = os.path.join(dest_dir, 'run_qe_jobs.sh')
     run_i_dir = os.path.abspath(os.path.join(dest_dir, 'run_$RUN_i'))
     # write the array job file
     with open(bash_filename, 'w') as f:
         f.write('#!/bin/bash\n\n')
         f.write('#SBATCH --time=24:00:00\n')
-        f.write('#SBATCH --job-name=bulk_eos\n')
+        f.write(f'#SBATCH --job-name={job_name}\n')
         f.write('#SBATCH --mem=40Gb\n')
         f.write('#SBATCH --cpus-per-task=1\n')
         f.write('#SBATCH --ntasks=16\n')
@@ -163,87 +159,3 @@ def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', ecutwfc=1000, kpt
     calc_filename = os.path.join(calc_dir, f'calc.py')
     with open(calc_filename, 'w') as f:
         f.writelines([line + '\n' for line in python_file_lines])
-
-
-def run_eos(bulk_dir):
-    import job_manager
-    calc_dir = os.path.join(bulk_dir, 'eos')
-    cur_dir = os.getcwd()
-    os.chdir(calc_dir)
-    eos_job = job_manager.SlurmJob()
-    cmd = "sbatch run_qe_jobs.sh"
-    eos_job.submit(cmd)
-    os.chdir(cur_dir)
-
-
-def analyze_eos(bulk_dir):
-    """function to find the lowest energy lattice constant
-    in a folder full of QE runs
-
-    returns the minimum energy lattice constant
-    """
-    eos_dir = os.path.join(bulk_dir, 'eos')
-
-    pwo_files = glob.glob(os.path.join(eos_dir, '*', 'espresso.pwo'))
-    N = len(pwo_files)
-    pwo_files.sort()
-
-    energies = []
-    lattice_constants = []
-
-    for pwo_file in pwo_files:
-        with open(pwo_file, 'r') as f:
-            traj = list(read_espresso_out(f, index=slice(None)))
-            atoms = traj[-1]
-            energies.append(atoms.get_potential_energy())
-            lattice_constant = atoms.get_distances(0, 1)[0] * np.sqrt(2)
-            lattice_constants.append(lattice_constant)
-
-    min_energy = np.min(energies)
-    min_i = energies.index(min_energy)
-    return (lattice_constants[min_i])
-    # print(f'Min lattice constant: {lattice_constants[min_i]}')
-
-
-def plot_eos(bulk_dir, dest_dir=None):
-    """function to plot energy vs. lattice constant
-    """
-    eos_dir = os.path.join(bulk_dir, 'eos')
-    if dest_dir is None:
-        dest_dir = eos_dir
-
-    pwo_files = glob.glob(os.path.join(eos_dir, '*', 'espresso.pwo'))
-    N = len(pwo_files)
-    pwo_files.sort()
-
-    energies = []
-    lattice_constants = []
-
-    for pwo_file in pwo_files:
-        with open(pwo_file, 'r') as f:
-            traj = list(read_espresso_out(f, index=slice(None)))
-            atoms = traj[-1]
-            energies.append(atoms.get_potential_energy())
-            lattice_constant = atoms.get_distances(0, 1)[0] * np.sqrt(2)
-            lattice_constants.append(lattice_constant)
-
-    fig, ax = plt.subplots()
-    plt.plot(lattice_constants, energies, marker='o')
-
-    # label the minimum
-    label_min = True
-    if label_min:
-        min_energy = np.min(energies)
-        min_i = energies.index(min_energy)
-        ax.annotate(
-            f'({np.round(lattice_constants[min_i], 3)}, {np.round(min_energy, 3)})',
-            xy=(lattice_constants[min_i], min_energy),
-            xytext=(lattice_constants[min_i], np.mean(energies)),
-            arrowprops=dict(arrowstyle="->", connectionstyle="arc3"),
-        )
-
-    plt.ylabel('Energy (eV)')
-    ax.yaxis.get_major_formatter().set_useOffset(False)
-    plt.xlabel(r'Lattice Constant ($\AA$)')
-    plt.title('Bulk Energy vs. Lattice Constant')
-    plt.savefig(os.path.join(dest_dir, 'equation_of_state.png'))
