@@ -42,12 +42,13 @@ ________smear
 """
 
 import os
-
-# Script to set up energy and run an energy calculation in ase/quantum espresso
-import os
 import sys
+import glob
 
 import numpy as np
+from matplotlib import pyplot as plt
+from ase.io.espresso import read_espresso_out
+
 
 
 def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.05):
@@ -197,3 +198,78 @@ def run_eos(bulk_dir):
     cmd = "sbatch run_qe_jobs.sh"
     eos_job.submit(cmd)
     os.chdir(cur_dir)
+
+
+def analyze_eos(bulk_dir):
+    """function to find the lowest energy lattice constant
+    in a folder full of QE runs
+
+    returns the minimum energy lattice constant
+    """
+    eos_dir = os.path.join(bulk_dir, 'eos')
+    
+    pwo_files = glob.glob(os.path.join(eos_dir, '*', 'espresso.pwo'))
+    N = len(pwo_files)
+    pwo_files.sort()
+
+    energies = []
+    lattice_constants = []
+
+    for pwo_file in pwo_files:
+        with open(pwo_file, 'r') as f:
+            traj = list(read_espresso_out(f, index=slice(None)))
+            atoms = traj[-1]
+            energies.append(atoms.get_potential_energy())
+            lattice_constant = atoms.get_distances(0, 1)[0] * np.sqrt(2)
+            lattice_constants.append(lattice_constant)
+
+
+    min_energy = np.min(energies)
+    min_i = energies.index(min_energy)
+    return (lattice_constants[min_i])
+    # print(f'Min lattice constant: {lattice_constants[min_i]}')
+    
+
+def plot_eos(bulk_dir, dest_dir=None):
+    """function to plot energy vs. lattice constant
+    """
+    eos_dir = os.path.join(bulk_dir, 'eos')
+    if dest_dir is None:
+        dest_dir = eos_dir
+
+    pwo_files = glob.glob(os.path.join(eos_dir, '*', 'espresso.pwo'))
+    N = len(pwo_files)
+    pwo_files.sort()
+
+    energies = []
+    lattice_constants = []
+
+    for pwo_file in pwo_files:
+        with open(pwo_file, 'r') as f:
+            traj = list(read_espresso_out(f, index=slice(None)))
+            atoms = traj[-1]
+            energies.append(atoms.get_potential_energy())
+            lattice_constant = atoms.get_distances(0, 1)[0] * np.sqrt(2)
+            lattice_constants.append(lattice_constant)
+
+    fig, ax = plt.subplots()
+    plt.plot(lattice_constants, energies, marker='o')
+
+    # label the minimum
+    label_min = True
+    if label_min:
+        min_energy = np.min(energies)
+        min_i = energies.index(min_energy)
+        ax.annotate(
+            f'({np.round(lattice_constants[min_i], 3)}, {np.round(min_energy, 3)})',
+            xy=(lattice_constants[min_i], min_energy),
+            xytext=(lattice_constants[min_i], np.mean(energies)),
+            arrowprops=dict(arrowstyle="->", connectionstyle="arc3"),
+        )
+
+    plt.ylabel('Energy (eV)')
+    ax.yaxis.get_major_formatter().set_useOffset(False)
+    plt.xlabel(r'Lattice Constant ($\AA$)')
+    plt.title('Bulk Energy vs. Lattice Constant')
+    plt.savefig(os.path.join(dest_dir, 'equation_of_state.png'))
+    
