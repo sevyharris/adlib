@@ -126,6 +126,8 @@ def make_vc_relax_script(calc_dir, metal, lattice_constant):
         "    'O': 'O_ONCV_PBE-1.2.upf',",
         "    'N': 'N_ONCV_PBE-1.2.upf',",
         "    'H': 'H_ONCV_PBE-1.2.upf',",
+        "    'Pt': 'Pt_ONCV_PBE-1.2.upf',",
+        "    'Pd': 'Pd_ONCV_PBE-1.2.upf',",
         "}",
         "",
         f"command = f'mpirun -np {nproc} " + "{pw_executable} -in PREFIX.pwi > PREFIX.pwo'",

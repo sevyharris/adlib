@@ -38,12 +38,6 @@ ________smear
 """
 
 import os
-import sys
-import glob
-
-import numpy as np
-from matplotlib import pyplot as plt
-from ase.io.espresso import read_espresso_out
 
 
 def make_scf_run_file(calc_dir, nproc=16, job_name='bulk_energy'):
@@ -128,6 +122,8 @@ def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', ecutwfc=1000, kpt
         "    'O': 'O_ONCV_PBE-1.2.upf',",
         "    'N': 'N_ONCV_PBE-1.2.upf',",
         "    'H': 'H_ONCV_PBE-1.2.upf',",
+        "    'Pt': 'Pt_ONCV_PBE-1.2.upf',",
+        "    'Pd': 'Pd_ONCV_PBE-1.2.upf',",
         "}",
         "",
         f"command = f'mpirun -np {nproc} " + "{pw_executable} -in PREFIX.pwi > PREFIX.pwo'",

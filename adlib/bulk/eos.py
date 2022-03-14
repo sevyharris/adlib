@@ -75,9 +75,42 @@ def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.0
     adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos')
 
 
-def run_eos(bulk_dir):
+def setup_eos_coarse(bulk_dir, lattice_constant_guess, metal='Cu'):
+    """
+    script to set up coarse calculation of E vs. lattice constant
+    """
+    eos_dir = os.path.join(bulk_dir, 'eos_coarse')
+    os.makedirs(eos_dir, exist_ok=True)
+
+    deltas = np.linspace(-0.05, 0.05, 21)
+    lattice_constants = deltas + lattice_constant_guess
+
+    for i, lattice_constant in enumerate(lattice_constants):
+        calc_dir = os.path.join(eos_dir, f'run_{i:04}')
+        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal)
+
+    adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos_coarse')
+
+
+def setup_eos_fine(bulk_dir, lattice_constant_guess, metal='Cu'):
+    """
+    script to set up fine calculation of E vs. lattice constant
+    """
+    eos_dir = os.path.join(bulk_dir, 'eos_fine')
+    os.makedirs(eos_dir, exist_ok=True)
+
+    deltas = np.linspace(-0.005, 0.005, 21)
+    lattice_constants = deltas + lattice_constant_guess
+
+    for i, lattice_constant in enumerate(lattice_constants):
+        calc_dir = os.path.join(eos_dir, f'run_{i:04}')
+        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal)
+
+    adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos_fine')
+
+
+def run_eos(calc_dir):
     import job_manager
-    calc_dir = os.path.join(bulk_dir, 'eos')
     cur_dir = os.getcwd()
     os.chdir(calc_dir)
     eos_job = job_manager.SlurmJob()
@@ -86,15 +119,14 @@ def run_eos(bulk_dir):
     os.chdir(cur_dir)
 
 
-def analyze_eos(bulk_dir):
+def analyze_eos(calc_dir):
     """function to find the lowest energy lattice constant
     in a folder full of QE runs
 
     returns the minimum energy lattice constant
     """
-    eos_dir = os.path.join(bulk_dir, 'eos')
 
-    pwo_files = glob.glob(os.path.join(eos_dir, '*', 'espresso.pwo'))
+    pwo_files = glob.glob(os.path.join(calc_dir, '*', 'espresso.pwo'))
     N = len(pwo_files)
     pwo_files.sort()
 
@@ -115,14 +147,13 @@ def analyze_eos(bulk_dir):
     # print(f'Min lattice constant: {lattice_constants[min_i]}')
 
 
-def plot_eos(bulk_dir, dest_dir=None):
+def plot_eos(calc_dir, dest_dir=None):
     """function to plot energy vs. lattice constant
     """
-    eos_dir = os.path.join(bulk_dir, 'eos')
     if dest_dir is None:
         dest_dir = eos_dir
 
-    pwo_files = glob.glob(os.path.join(eos_dir, '*', 'espresso.pwo'))
+    pwo_files = glob.glob(os.path.join(calc_dir, '*', 'espresso.pwo'))
     N = len(pwo_files)
     pwo_files.sort()
 
