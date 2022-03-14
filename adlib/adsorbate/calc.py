@@ -77,7 +77,7 @@ def make_relax_ads_script(calc_dir):
     """
     Make a python script that uses ase to run quantum espresso
     """
-    
+
     python_file_name = os.path.join(calc_dir, 'relax_ads.py')
     nproc = 16
     ecutwfc = 500

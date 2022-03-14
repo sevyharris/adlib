@@ -17,4 +17,3 @@ adsorbates = [
 ]
 for ads in adsorbates:
     adlib.adsorbate.xyz.make_xyz(ads, base_dir=xyz_dir)
-

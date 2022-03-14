@@ -50,29 +50,6 @@ from matplotlib import pyplot as plt
 from ase.io.espresso import read_espresso_out
 
 
-def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.05):
-    """
-    script to set up N jobs
-
-    N = number of steps/jobs at which to compute enregy
-    half_range is half of the domain of the lattice constant guess
-        for example, if my guess for lattice constant is 4.0, and I want to
-        compute energies for lattice constants ranging from 3.5 - 4.5,
-        then half_range should be set to 0.5 Angstroms
-    """
-    eos_dir = os.path.join(bulk_dir, 'eos')
-    os.makedirs(eos_dir, exist_ok=True)
-
-    deltas = np.linspace(-half_range, half_range, N)
-    lattice_constants = deltas + lattice_constant_guess
-
-    for i, lattice_constant in enumerate(lattice_constants):
-        calc_dir = os.path.join(eos_dir, f'run_{i:04}')
-        make_scf_calc_file(calc_dir, lattice_constant, metal=metal, ecutwfc=1000, kpt=9, smear=0.1, nproc=16)
-
-    make_scf_run_file_array(eos_dir, i)
-
-
 def make_scf_run_file(calc_dir, nproc=16):
     bash_filename = os.path.join(calc_dir, 'run.sh')
     # write the array job file

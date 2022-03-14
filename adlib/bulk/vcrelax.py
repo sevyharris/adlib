@@ -75,7 +75,7 @@ def make_vc_relax_script(calc_dir, metal, lattice_constant):
     """
     Make a python script that uses ase to run quantum espresso
     """
-    
+
     python_file_name = os.path.join(calc_dir, 'relax_bulk.py')
     nproc = 16
     kpts = 5
