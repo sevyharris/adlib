@@ -151,7 +151,7 @@ def plot_eos(calc_dir, dest_dir=None):
     """function to plot energy vs. lattice constant
     """
     if dest_dir is None:
-        dest_dir = eos_dir
+        dest_dir = calc_dir
 
     pwo_files = glob.glob(os.path.join(calc_dir, '*', 'espresso.pwo'))
     N = len(pwo_files)

@@ -272,7 +272,7 @@ def make_relax_script(calc_dir, lattice_constant, metal='Cu', ecutwfc=100, kpt=7
         "    pseudopotentials=pseudopotentials,",
         "    tstress=True,",
         "    tprnfor=True,",
-        f"    kpts=({kpt}, {kpt}, {kpt}),",
+        f"    kpts=({kpt}, {kpt}, 1),",
         "    pseudo_dir=os.environ['PSEUDO_DIR'],",
         "    input_data=espresso_settings,",
         ")",
