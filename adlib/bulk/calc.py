@@ -70,7 +70,7 @@ def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy'):
         f.write('#SBATCH --cpus-per-task=1\n')
         f.write('#SBATCH --ntasks=16\n')
         f.write('#SBATCH --partition=short,west\n')
-        f.write(f'#SBATCH --array=0-{N_runs - 1}\n\n')
+        f.write(f'#SBATCH --array=0-{N_runs}\n\n')
 
         f.write('# create a variable that includes leading zeros\n')
         f.write('RUN_i=$(printf "%04.0f" $SLURM_ARRAY_TASK_ID)\n')

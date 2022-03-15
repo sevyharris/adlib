@@ -63,7 +63,7 @@ def make_run_relax_script(calc_dir, nproc=32, job_name='relax_system'):
 
 
 # TODO actually implement this
-def make_relax_script(calc_dir, lattice_constant, metal='Cu', ecutwfc=100, kpt=7, smear=0.1, nproc=32):
+def make_relax_script(calc_dir, ecutwfc=100, kpt=7, smear=0.1, nproc=32):
     """Function to make a python script to relax the slab-adsorption system
     """
     fmax = 0.01
