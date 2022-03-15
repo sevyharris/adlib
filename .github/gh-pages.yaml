@@ -1,0 +1,27 @@
+name: github pages
+
+on:
+  push:
+    branches:
+      - main
+      - docs
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: build docs
+        uses: ammaraskar/sphinx-action@master
+          with:
+            docs-folder: "docs/"
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3.7.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/build/html/
