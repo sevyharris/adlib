@@ -83,7 +83,7 @@ def setup_eos_coarse(bulk_dir, lattice_constant_guess, metal='Cu'):
     eos_dir = os.path.join(bulk_dir, 'eos_coarse')
     os.makedirs(eos_dir, exist_ok=True)
 
-    deltas = np.linspace(-0.05, 0.05, 21)
+    deltas = np.linspace(-0.05, 0.05, 11)
     lattice_constants = deltas + lattice_constant_guess
 
     for i, lattice_constant in enumerate(lattice_constants):
@@ -100,7 +100,7 @@ def setup_eos_fine(bulk_dir, lattice_constant_guess, metal='Cu'):
     eos_dir = os.path.join(bulk_dir, 'eos_fine')
     os.makedirs(eos_dir, exist_ok=True)
 
-    deltas = np.linspace(-0.005, 0.005, 21)
+    deltas = np.linspace(-0.005, 0.005, 11)
     lattice_constants = deltas + lattice_constant_guess
 
     for i, lattice_constant in enumerate(lattice_constants):
@@ -124,7 +124,8 @@ def analyze_eos(calc_dir):
     """function to find the lowest energy lattice constant
     in a folder full of QE runs
 
-    returns the minimum energy lattice constant
+    returns the minimum energy lattice constant using ase's eos fit
+    assumes fcc geometry
     """
 
     pwo_files = glob.glob(os.path.join(calc_dir, '*', 'espresso.pwo'))
@@ -132,23 +133,25 @@ def analyze_eos(calc_dir):
     pwo_files.sort()
 
     energies = []
-    lattice_constants = []
+    volumes = []
 
     for pwo_file in pwo_files:
         with open(pwo_file, 'r') as f:
             traj = list(read_espresso_out(f, index=slice(None)))
-            atoms = traj[-1]
+            try:
+                atoms = traj[-1]
+            except IndexError:
+                continue
             energies.append(atoms.get_potential_energy())
-            lattice_constant = atoms.get_distances(0, 1)[0] * np.sqrt(2)
-            lattice_constants.append(lattice_constant)
+            volumes.append(atoms.cell.volume)
 
-    min_energy = np.min(energies)
-    min_i = energies.index(min_energy)
-    return (lattice_constants[min_i])
-    # print(f'Min lattice constant: {lattice_constants[min_i]}')
+    bulk_eos = ase.eos.EquationOfState(volumes, energies)
+    v0, e0, B = bulk_eos.fit()
+    a0 = np.float_power(v0, 1.0 / 3.0)
+    return a0
 
 
-def plot_eos(calc_dir, dest_dir=None):
+def plot_energy_vs_lattice(calc_dir, dest_dir=None):
     """function to plot energy vs. lattice constant
     """
     if dest_dir is None:
@@ -188,10 +191,10 @@ def plot_eos(calc_dir, dest_dir=None):
     ax.yaxis.get_major_formatter().set_useOffset(False)
     plt.xlabel(r'Lattice Constant ($\AA$)')
     plt.title('Bulk Energy vs. Lattice Constant')
-    plt.savefig(os.path.join(dest_dir, 'equation_of_state.png'))
+    plt.savefig(os.path.join(dest_dir, 'energy_vs_lattice.png'))
 
 
-def plot_eos2(calc_dir, dest_dir=None):
+def plot_eos(calc_dir, dest_dir=None):
     """function to plot energy vs. lattice constant, using ase EOS fitting
     """
     if dest_dir is None:
@@ -222,8 +225,5 @@ def plot_eos2(calc_dir, dest_dir=None):
     a0 = np.float_power(v0, 1.0 / 3.0)
     plot_fname = os.path.join(dest_dir, 'ase_eos.png')
     ax = bulk_eos.plot(filename=plot_fname, show=False)
-    # print(f'v0={v0}')
-    # print(f'e0={e0}')
-    # print(f'a0={a0}')
     ax.clear()
     return a0

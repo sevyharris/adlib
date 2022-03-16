@@ -98,6 +98,7 @@ def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', ecutwfc=1000, kpt
         "    'control': {",
         "        'verbosity': 'high',",
         "        'calculation': 'scf',",
+        "        'disk_io': 'none',",
         "    },",
         "    'system': {",
         "        'input_dft': 'BEEF-VDW',",

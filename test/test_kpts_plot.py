@@ -12,7 +12,7 @@ kpts = [1, 2, 3, 4, 5, 6, 7]
 lattice_constants = np.zeros(len(kpts))
 for i, k in enumerate(kpts):
     calc_dir = os.path.join(kpts_dir, str(k))
-    lattice_constants[i] = adlib.bulk.eos.plot_eos2(calc_dir)
+    lattice_constants[i] = adlib.bulk.eos.plot_eos(calc_dir)
 
 
 best_guess = lattice_constants[-1]
