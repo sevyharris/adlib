@@ -48,6 +48,7 @@ import glob
 import numpy as np
 from matplotlib import pyplot as plt
 from ase.io.espresso import read_espresso_out
+import ase.eos
 
 import adlib.bulk.calc
 
@@ -188,3 +189,61 @@ def plot_eos(calc_dir, dest_dir=None):
     plt.xlabel(r'Lattice Constant ($\AA$)')
     plt.title('Bulk Energy vs. Lattice Constant')
     plt.savefig(os.path.join(dest_dir, 'equation_of_state.png'))
+
+
+def plot_eos2(calc_dir, dest_dir=None):
+    """function to plot energy vs. lattice constant, using ase EOS fitting
+    """
+    if dest_dir is None:
+        dest_dir = calc_dir
+
+    pwo_files = glob.glob(os.path.join(calc_dir, '*', 'espresso.pwo'))
+    N = len(pwo_files)
+    pwo_files.sort()
+
+    energies = []
+    lattice_constants = []
+    volumes = []
+
+    for pwo_file in pwo_files:
+        with open(pwo_file, 'r') as f:
+            try:
+                traj = list(read_espresso_out(f, index=slice(None)))
+                atoms = traj[-1]
+            except IndexError:
+                continue
+            energies.append(atoms.get_potential_energy())
+            lattice_constant = atoms.get_distances(0, 1)[0] * np.sqrt(2)
+            lattice_constants.append(lattice_constant)
+            volumes.append(atoms.cell.volume)
+
+    bulk_eos = ase.eos.EquationOfState(volumes, energies)
+    v0, e0, B = bulk_eos.fit()
+    a0 = np.float_power(v0, 1.0 / 3.0)
+    plot_fname = os.path.join(dest_dir, 'ase_eos.png')
+    ax = bulk_eos.plot(filename=plot_fname, show=False)
+    print(f'v0={v0}')
+    print(f'e0={e0}')
+    print(f'a0={a0}')
+    ax.clear()
+    return a0
+    # fig, ax = plt.subplots()
+    # plt.plot(lattice_constants, energies, marker='o')
+
+    # # label the minimum
+    # label_min = True
+    # if label_min:
+    #     min_energy = np.min(energies)
+    #     min_i = energies.index(min_energy)
+    #     ax.annotate(
+    #         f'({np.round(lattice_constants[min_i], 3)}, {np.round(min_energy, 3)})',
+    #         xy=(lattice_constants[min_i], min_energy),
+    #         xytext=(lattice_constants[min_i], np.mean(energies)),
+    #         arrowprops=dict(arrowstyle="->", connectionstyle="arc3"),
+    #     )
+
+    # plt.ylabel('Energy (eV)')
+    # ax.yaxis.get_major_formatter().set_useOffset(False)
+    # plt.xlabel(r'Lattice Constant ($\AA$)')
+    # plt.title('Bulk Energy vs. Lattice Constant')
+    # plt.savefig(os.path.join(dest_dir, 'equation_of_state.png'))

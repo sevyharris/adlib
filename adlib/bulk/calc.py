@@ -29,10 +29,7 @@ ____________espresso.pwo
 ________runN
 ____________calc.py
 ____________espresso.pwo
-____convergence_check
-________kpts
-________ecutwfc
-________smear
+
 
 
 """
