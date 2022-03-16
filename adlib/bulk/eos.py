@@ -222,28 +222,8 @@ def plot_eos2(calc_dir, dest_dir=None):
     a0 = np.float_power(v0, 1.0 / 3.0)
     plot_fname = os.path.join(dest_dir, 'ase_eos.png')
     ax = bulk_eos.plot(filename=plot_fname, show=False)
-    print(f'v0={v0}')
-    print(f'e0={e0}')
-    print(f'a0={a0}')
+    # print(f'v0={v0}')
+    # print(f'e0={e0}')
+    # print(f'a0={a0}')
     ax.clear()
     return a0
-    # fig, ax = plt.subplots()
-    # plt.plot(lattice_constants, energies, marker='o')
-
-    # # label the minimum
-    # label_min = True
-    # if label_min:
-    #     min_energy = np.min(energies)
-    #     min_i = energies.index(min_energy)
-    #     ax.annotate(
-    #         f'({np.round(lattice_constants[min_i], 3)}, {np.round(min_energy, 3)})',
-    #         xy=(lattice_constants[min_i], min_energy),
-    #         xytext=(lattice_constants[min_i], np.mean(energies)),
-    #         arrowprops=dict(arrowstyle="->", connectionstyle="arc3"),
-    #     )
-
-    # plt.ylabel('Energy (eV)')
-    # ax.yaxis.get_major_formatter().set_useOffset(False)
-    # plt.xlabel(r'Lattice Constant ($\AA$)')
-    # plt.title('Bulk Energy vs. Lattice Constant')
-    # plt.savefig(os.path.join(dest_dir, 'equation_of_state.png'))
