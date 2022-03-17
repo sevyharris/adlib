@@ -117,6 +117,7 @@ def make_relax_ads_script(calc_dir, vacuum=10.0, ecutwfc=500, nproc=16):
         "from ase.io.trajectory import Trajectory",
         "from ase.io import read",
         "from ase.io.espresso import read_espresso_out",
+        "from ase.io.ulm import InvalidULMFileError",
         "",
         "",
         "start = time()",

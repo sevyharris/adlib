@@ -59,13 +59,18 @@ def setup_relax_adsorbate(adsorbate_dir, xyz_dir=None):
     make_run_relax_ads_script(adsorbate_dir)
 
 
-def setup_vacuum_converge(adsorbate_dir, xyz_dir=None, adsorbate_pwo=None):
+def setup_converge(adsorbate_dir, job_type, xyz_dir=None, adsorbate_pwo=None):
     """
-    script to set up N jobs to check vacuum convergence
+    script to set up N jobs to check vacuum or ecutwfc convergence
     """
+    valid_jobs = ['vacuum_converge', 'ecutwfc_converge']
+    if job_type not in valid_jobs:
+        print('unknown job convergence type')
+        return
+
     ads_name = os.path.basename(adsorbate_dir)
-    vacuum_dir = os.path.join(adsorbate_dir, 'vacuum_converge')
-    os.makedirs(vacuum_dir, exist_ok=True)
+    converge_dir = os.path.join(adsorbate_dir, job_type)
+    os.makedirs(converge_dir, exist_ok=True)
 
     if adsorbate_pwo:
         with open(adsorbate_pwo, 'r') as f:
@@ -80,23 +85,35 @@ def setup_vacuum_converge(adsorbate_dir, xyz_dir=None, adsorbate_pwo=None):
         xyz_file = os.path.join(xyz_dir, f'{ads_name}.xyz')
         adsorbate = read(xyz_file)
 
-    vacuums = [v for v in range(5, 16)]
+    if job_type == 'vacuum_converge':
+        vacuums = [v for v in range(5, 16)]
+        for i, vac in enumerate(vacuums):
+            calc_dir = os.path.join(converge_dir, f'run_{i:04}')
+            os.makedirs(calc_dir, exist_ok=True)
+            ads_filename = os.path.join(calc_dir, ads_name + '.xyz')
+            write(ads_filename, adsorbate)
+            adlib.adsorbate.calc.make_relax_ads_script(calc_dir, vacuum=vac)
+    elif job_type == 'ecutwfc_converge':
+        ecuts = [30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 150.0, 200.0]
+        for i, ecut in enumerate(ecuts):
+            calc_dir = os.path.join(converge_dir, f'run_{i:04}')
+            os.makedirs(calc_dir, exist_ok=True)
+            ads_filename = os.path.join(calc_dir, ads_name + '.xyz')
+            write(ads_filename, adsorbate)
+            adlib.adsorbate.calc.make_relax_ads_script(calc_dir, ecutwfc=ecut)
 
-    for i, vac in enumerate(vacuums):
-        calc_dir = os.path.join(vacuum_dir, f'run_{i:04}')
-        ads_filename = os.path.join(calc_dir, ads_name + '.xyz')
-        write(ads_filename, adsorbate)
-        adlib.adsorbate.calc.make_relax_ads_script(calc_dir, vacuum=vac)
-
-    adlib.adsorbate.calc.make_run_array(vacuum_dir, i, job_name='ads_vacuum')
+    adlib.adsorbate.calc.make_run_array(converge_dir, i, job_name=job_type)
 
 
-def run_vacuum_converge(adsorbate_dir):
+def run_converge(adsorbate_dir, job_type):
+    if job_type != 'ecutwfc_converge' and job_type != 'vacuum_converge':
+        print('unknown job convergence type')
+        return
     import job_manager
     cur_dir = os.getcwd()
-    vacuum_dir = os.path.join(adsorbate_dir, 'vacuum_converge')
-    os.chdir(vacuum_dir)
-    ads_job = job_manager.SlurmJob()
+    converge_dir = os.path.join(adsorbate_dir, job_type)
+    os.chdir(converge_dir)
+    ads_converge_job = job_manager.SlurmJob()
     cmd = "sbatch run_qe_jobs.sh"
-    ads_job.submit(cmd)
+    ads_converge_job.submit(cmd)
     os.chdir(cur_dir)
