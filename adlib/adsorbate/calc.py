@@ -50,6 +50,32 @@ def setup_relax_adsorbate(adsorbate_dir, xyz_dir=None):
     make_run_relax_ads_script(adsorbate_dir)
 
 
+def make_run_array(dest_dir, N_runs, job_name='ads_converge', nproc=16):
+    # function to set up an array job
+    bash_filename = os.path.join(dest_dir, 'run_qe_jobs.sh')
+    run_i_dir = os.path.abspath(os.path.join(dest_dir, 'run_$RUN_i'))
+    # write the array job file
+    with open(bash_filename, 'w') as f:
+        f.write('#!/bin/bash\n\n')
+        f.write('#SBATCH --time=24:00:00\n')
+        f.write(f'#SBATCH --job-name={job_name}\n')
+        f.write('#SBATCH --mem=40Gb\n')
+        f.write('#SBATCH --cpus-per-task=1\n')
+        f.write(f'#SBATCH --ntasks={nproc}\n')
+        f.write('#SBATCH --partition=short,west\n')
+        f.write(f'#SBATCH --array=0-{N_runs}\n\n')
+
+        f.write('# create a variable that includes leading zeros\n')
+        f.write('RUN_i=$(printf "%04.0f" $SLURM_ARRAY_TASK_ID)\n')
+
+        f.write('module load gcc/10.1.0\n')
+        f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
+        f.write('module load scalapack/2.1.0-skylake\n\n')
+
+        f.write(f'cd {run_i_dir}\n')
+        f.write(f'python relax_ads.py\n\n')
+
+
 def make_run_relax_ads_script(calc_dir, nproc=16):
     """
     Make a shell script to run the python script
@@ -73,15 +99,12 @@ def make_run_relax_ads_script(calc_dir, nproc=16):
         f.write(f'python relax_ads.py\n')
 
 
-def make_relax_ads_script(calc_dir):
+def make_relax_ads_script(calc_dir, vacuum=10.0, ecutwfc=500, nproc=16):
     """
     Make a python script that uses ase to run quantum espresso
     """
 
     python_file_name = os.path.join(calc_dir, 'relax_ads.py')
-    nproc = 16
-    ecutwfc = 500
-    vacuum = 10.0
     fmax = 0.01
 
     python_file_lines = [
