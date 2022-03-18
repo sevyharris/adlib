@@ -10,6 +10,11 @@ Welcome to adlib's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   Installation
+   Overview
+   Examples
+
+
 
 
 Indices and tables
@@ -18,3 +23,5 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. include:: links.txt
