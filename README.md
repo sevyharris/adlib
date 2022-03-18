@@ -11,7 +11,7 @@ Install with pip:
 `pip install -e adlib`
 
 # Brief Overview
-adlib contains functions to generate python scripts that use ase and quantum espresso to compute energies for adsorption.
+adlib contains functions to generate python scripts that use [ase](https://wiki.fysik.dtu.dk/ase/) and [Quantum Espresso](https://www.quantum-espresso.org/) to compute energies for adsorption.
 
 These functions are divided into
 * bulk (3D repeating metal)

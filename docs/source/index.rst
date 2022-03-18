@@ -10,9 +10,9 @@ Welcome to adlib's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   Installation
-   Overview
-   Examples
+   installation
+   overview
+   examples
 
 
 
