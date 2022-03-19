@@ -17,7 +17,7 @@ Welcome to adlib's documentation!
 
 
 
-Indices and tables
+Indices and Tables
 ==================
 
 * :ref:`genindex`
