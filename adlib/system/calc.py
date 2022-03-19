@@ -62,12 +62,11 @@ def make_run_relax_script(calc_dir, nproc=32, job_name='relax_system'):
         f.write(f'python relax_system.py\n')
 
 
-# TODO actually implement this
-def make_relax_script(calc_dir, ecutwfc=100, kpt=7, smear=0.1, nproc=32):
+def make_relax_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48):
     """Function to make a python script to relax the slab-adsorption system
     """
     fmax = 0.01
-    vacuum = 10.0
+    vacuum = 7.5
 
     python_file_lines = [
         "import os",

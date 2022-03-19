@@ -44,7 +44,7 @@ ________________espresso.pwo
 import os
 
 
-def make_run_relax_script(calc_dir, nproc=32, job_name='relax_slab'):
+def make_run_relax_script(calc_dir, nproc=48, job_name='relax_slab'):
     bash_filename = os.path.join(calc_dir, 'run.sh')
     # write the array job file
     with open(bash_filename, 'w') as f:
@@ -54,7 +54,8 @@ def make_run_relax_script(calc_dir, nproc=32, job_name='relax_slab'):
         f.write('#SBATCH --mem=40Gb\n')
         f.write('#SBATCH --cpus-per-task=1\n')
         f.write(f'#SBATCH --ntasks={nproc}\n')
-        f.write('#SBATCH --partition=short,west\n')
+        f.write('#SBATCH --partition=short\n')
+        f.write('#SBATCH --constraint=cascadelake\n\n')
         f.write('module load gcc/10.1.0\n')
         f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
         f.write('module load scalapack/2.1.0-skylake\n\n')
@@ -62,11 +63,11 @@ def make_run_relax_script(calc_dir, nproc=32, job_name='relax_slab'):
         f.write(f'python relax_slab.py\n')
 
 
-def make_relax_script(calc_dir, lattice_constant, metal='Cu', ecutwfc=100, kpt=7, smear=0.1, nproc=32):
+def make_relax_script(calc_dir, lattice_constant, metal='Cu', ecutwfc=60, kpt=5, smear=0.1, nproc=48):
     """Function to make a python script to relax the slab
     """
     fmax = 0.01
-    vacuum = 10.0
+    vacuum = 7.5
 
     python_file_lines = [
         "import os",
