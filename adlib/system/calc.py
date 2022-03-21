@@ -44,7 +44,7 @@ ________________espresso.pwo
 import os
 
 
-def make_run_relax_script(calc_dir, nproc=32, job_name='relax_system'):
+def make_run_relax_script(calc_dir, nproc=48, job_name='relax_system'):
     bash_filename = os.path.join(calc_dir, 'run.sh')
     # write the array job file
     with open(bash_filename, 'w') as f:
