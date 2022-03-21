@@ -38,7 +38,7 @@ import os
 import shutil
 
 
-def setup_relax_adsorbate(adsorbate_dir, xyz_dir=None):
+def setup_relax_adsorbate(adsorbate_dir, xyz_dir=None, nproc=48):
     ads_name = os.path.basename(adsorbate_dir)
     if xyz_dir is None:
         # TODO make this relative to the package and ship the code with some example adsorbate xyzs
@@ -46,8 +46,8 @@ def setup_relax_adsorbate(adsorbate_dir, xyz_dir=None):
     os.makedirs(adsorbate_dir, exist_ok=True)
     xyz_file = os.path.join(xyz_dir, f'{ads_name}.xyz')
     shutil.copy(xyz_file, adsorbate_dir)
-    make_relax_ads_script(adsorbate_dir)
-    make_run_relax_ads_script(adsorbate_dir)
+    make_relax_ads_script(adsorbate_dir, nproc=nproc)
+    make_run_relax_ads_script(adsorbate_dir, nproc=nproc)
 
 
 def make_run_array(dest_dir, N_runs, job_name='ads_converge', nproc=16):
@@ -99,7 +99,7 @@ def make_run_relax_ads_script(calc_dir, nproc=16):
         f.write(f'python relax_ads.py\n')
 
 
-def make_relax_ads_script(calc_dir, vacuum=10.0, ecutwfc=500, nproc=16):
+def make_relax_ads_script(calc_dir, vacuum=10.0, ecutwfc=100, nproc=16):
     """
     Make a python script that uses ase to run quantum espresso
     """
