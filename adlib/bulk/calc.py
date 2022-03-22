@@ -35,22 +35,28 @@ ____________espresso.pwo
 """
 
 import os
+import adlib.env
 
+
+environment = adlib.env.load_environment()
 
 def make_scf_run_file(calc_dir, nproc=16, job_name='bulk_energy'):
     bash_filename = os.path.join(calc_dir, 'run.sh')
     # write the array job file
     with open(bash_filename, 'w') as f:
         f.write('#!/bin/bash\n\n')
-        f.write('#SBATCH --time=24:00:00\n')
-        f.write(f'#SBATCH --job-name={job_name}\n')
-        f.write('#SBATCH --mem=40Gb\n')
-        f.write('#SBATCH --cpus-per-task=1\n')
-        f.write(f'#SBATCH --ntasks={nproc}\n')
-        f.write('#SBATCH --partition=short,west\n')
-        f.write('module load gcc/10.1.0\n')
-        f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
-        f.write('module load scalapack/2.1.0-skylake\n\n')
+
+        if environment == 'DISCOVERY':
+            f.write('#SBATCH --time=24:00:00\n')
+            f.write(f'#SBATCH --job-name={job_name}\n')
+            f.write('#SBATCH --mem=40Gb\n')
+            f.write('#SBATCH --cpus-per-task=1\n')
+            f.write(f'#SBATCH --ntasks={nproc}\n')
+            f.write('#SBATCH --partition=short,west\n')
+            f.write('module load gcc/10.1.0\n')
+            f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
+            f.write('module load scalapack/2.1.0-skylake\n\n')
+
         f.write(f'cd {calc_dir}\n')
         f.write(f'python calc.py\n')
 
@@ -60,6 +66,7 @@ def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy'):
     run_i_dir = os.path.abspath(os.path.join(dest_dir, 'run_$RUN_i'))
     # write the array job file
     with open(bash_filename, 'w') as f:
+        # TODO add array option for single node environment
         f.write('#!/bin/bash\n\n')
         f.write('#SBATCH --time=24:00:00\n')
         f.write(f'#SBATCH --job-name={job_name}\n')

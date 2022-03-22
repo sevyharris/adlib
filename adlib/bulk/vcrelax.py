@@ -40,6 +40,10 @@ ________smear
 """
 
 import os
+import adlib.env
+
+
+environment = adlib.env.load_environment()
 
 
 def setup_vc_relax(bulk_dir, metal='Cu', lattice_constant_guess=3.6):
@@ -58,15 +62,16 @@ def make_run_vc_relax_script(calc_dir, nproc=16):
     # write the array job file
     with open(bash_filename, 'w') as f:
         f.write('#!/bin/bash\n\n')
-        f.write('#SBATCH --time=24:00:00\n')
-        f.write('#SBATCH --job-name=vc_relax\n')
-        f.write('#SBATCH --mem=40Gb\n')
-        f.write('#SBATCH --cpus-per-task=1\n')
-        f.write(f'#SBATCH --ntasks={nproc}\n')
-        f.write('#SBATCH --partition=short,west\n')
-        f.write('module load gcc/10.1.0\n')
-        f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
-        f.write('module load scalapack/2.1.0-skylake\n\n')
+        if environment == 'DISCOVERY':
+            f.write('#SBATCH --time=24:00:00\n')
+            f.write('#SBATCH --job-name=vc_relax\n')
+            f.write('#SBATCH --mem=40Gb\n')
+            f.write('#SBATCH --cpus-per-task=1\n')
+            f.write(f'#SBATCH --ntasks={nproc}\n')
+            f.write('#SBATCH --partition=short,west\n')
+            f.write('module load gcc/10.1.0\n')
+            f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
+            f.write('module load scalapack/2.1.0-skylake\n\n')
         f.write(f'cd {calc_dir}\n')
         f.write(f'python relax_bulk.py\n')
 
@@ -170,7 +175,16 @@ def run_vc_relax(bulk_dir):
     calc_dir = os.path.join(bulk_dir, 'vc_relax')
     cur_dir = os.getcwd()
     os.chdir(calc_dir)
-    vc_relax_job = job_manager.SlurmJob()
-    cmd = "sbatch run.sh"
+    if environment == 'DISCOVERY':
+        vc_relax_job = job_manager.SlurmJob()
+        cmd = "sbatch run.sh"
+    elif environment == 'SINGLE_NODE':
+        vc_relax_job = job_manager.DefaultJob()
+        cmd = ". run.sh"
+    elif environment == 'THETA':
+        raise NotImplementedError
+    else:
+        raise NotImplementedError
+
     vc_relax_job.submit(cmd)
     os.chdir(cur_dir)
