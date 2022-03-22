@@ -82,7 +82,7 @@ def setup_ecutwfc_converge(bulk_dir, lattice_constant_center, metal='Cu'):
             calc_dir = os.path.join(ecutwfc_dir, str(ecut), f'run_{j:04}')
             adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, ecutwfc=ecut, kpt=7, smear=0.1, nproc=16)
 
-        adlib.bulk.calc.make_scf_run_file_array(os.path.join(ecutwfc_dir, str(ecut)), i, job_name='ecut_bulk_converge')
+        adlib.bulk.calc.make_scf_run_file_array(os.path.join(ecutwfc_dir, str(ecut)), j, job_name='ecut_bulk_converge')
 
 
 def setup_smear_converge(bulk_dir, lattice_constant_center, metal='Cu'):
@@ -100,7 +100,7 @@ def setup_smear_converge(bulk_dir, lattice_constant_center, metal='Cu'):
             calc_dir = os.path.join(smear_dir, str(smear), f'run_{j:04}')
             adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, ecutwfc=1000, kpt=7, smear=smear, nproc=16)
 
-        adlib.bulk.calc.make_scf_run_file_array(os.path.join(smear_dir, str(smear)), i, job_name='smear_bulk_converge')
+        adlib.bulk.calc.make_scf_run_file_array(os.path.join(smear_dir, str(smear)), j, job_name='smear_bulk_converge')
 
 
 def plot_kpts_converge(calc_dir, dest_dir=None):
