@@ -204,10 +204,10 @@ def run_relax_slab(slab_dir):
     if environment == 'DISCOVERY':
         relax_slab_job = job_manager.SlurmJob()
         cmd = "sbatch run.sh"
-    if environment == 'SINGLE_NODE':
+    elif environment == 'SINGLE_NODE':
         relax_slab_job = job_manager.DefaultJob()
         cmd = "/bin/bash run.sh"
-    if environment == 'THETA':
+    elif environment == 'THETA':
         raise NotImplementedError
     else:
         raise NotImplementedError

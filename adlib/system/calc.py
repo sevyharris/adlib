@@ -256,10 +256,10 @@ def run_relax_system(system_dir):
     if environment == 'DISCOVERY':
         relax_system_job = job_manager.SlurmJob()
         cmd = "sbatch run.sh"
-    if environment == 'SINGLE_NODE':
+    elif environment == 'SINGLE_NODE':
         relax_system_job = job_manager.DefaultJob()
         cmd = "/bin/bash run.sh"
-    if environment == 'THETA':
+    elif environment == 'THETA':
         raise NotImplementedError
     else:
         raise NotImplementedError
