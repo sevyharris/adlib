@@ -46,10 +46,10 @@ import adlib.env
 environment = adlib.env.load_environment()
 
 
-def setup_vc_relax(bulk_dir, metal='Cu', lattice_constant_guess=3.6):
+def setup_vc_relax(bulk_dir, metal='Cu', lattice_constant_guess=3.6, nproc=16):
     os.makedirs(bulk_dir, exist_ok=True)
     vc_relax_dir = os.path.join(bulk_dir, 'vc_relax')
-    make_vc_relax_script(vc_relax_dir, metal, lattice_constant_guess)
+    make_vc_relax_script(vc_relax_dir, metal, lattice_constant_guess, nproc=nproc)
     make_run_vc_relax_script(vc_relax_dir)
 
 
@@ -76,13 +76,12 @@ def make_run_vc_relax_script(calc_dir, nproc=16):
         f.write(f'python relax_bulk.py\n')
 
 
-def make_vc_relax_script(calc_dir, metal, lattice_constant):
+def make_vc_relax_script(calc_dir, metal, lattice_constant, nproc=16):
     """
     Make a python script that uses ase to run quantum espresso
     """
 
     python_file_name = os.path.join(calc_dir, 'relax_bulk.py')
-    nproc = 16
     kpts = 5
     ecutwfc = 500
 
@@ -180,7 +179,7 @@ def run_vc_relax(bulk_dir):
         cmd = "sbatch run.sh"
     elif environment == 'SINGLE_NODE':
         vc_relax_job = job_manager.DefaultJob()
-        cmd = ". run.sh"
+        cmd = "/bin/bash run.sh"
     elif environment == 'THETA':
         raise NotImplementedError
     else:

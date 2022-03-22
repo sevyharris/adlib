@@ -40,6 +40,7 @@ import adlib.env
 
 environment = adlib.env.load_environment()
 
+
 def make_scf_run_file(calc_dir, nproc=16, job_name='bulk_energy'):
     bash_filename = os.path.join(calc_dir, 'run.sh')
     # write the array job file
@@ -61,7 +62,7 @@ def make_scf_run_file(calc_dir, nproc=16, job_name='bulk_energy'):
         f.write(f'python calc.py\n')
 
 
-def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy'):
+def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy', nproc=16):
     bash_filename = os.path.join(dest_dir, 'run_qe_jobs.sh')
     run_i_dir = os.path.abspath(os.path.join(dest_dir, 'run_$RUN_i'))
     # write the array job file
@@ -72,7 +73,7 @@ def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy'):
         f.write(f'#SBATCH --job-name={job_name}\n')
         f.write('#SBATCH --mem=40Gb\n')
         f.write('#SBATCH --cpus-per-task=1\n')
-        f.write('#SBATCH --ntasks=16\n')
+        f.write(f'#SBATCH --ntasks={nproc}\n')
         f.write('#SBATCH --partition=short,west\n')
         f.write(f'#SBATCH --array=0-{N_runs}\n\n')
 
