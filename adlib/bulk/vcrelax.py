@@ -72,7 +72,7 @@ def make_run_vc_relax_script(calc_dir, nproc=16):
             f.write('module load gcc/10.1.0\n')
             f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
             f.write('module load scalapack/2.1.0-skylake\n\n')
-        f.write(f'cd {calc_dir}\n')
+        # f.write(f'cd {calc_dir}\n')
         f.write(f'python relax_bulk.py\n')
 
 

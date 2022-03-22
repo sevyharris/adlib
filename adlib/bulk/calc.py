@@ -58,7 +58,7 @@ def make_scf_run_file(calc_dir, nproc=16, job_name='bulk_energy'):
             f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
             f.write('module load scalapack/2.1.0-skylake\n\n')
 
-        f.write(f'cd {calc_dir}\n')
+        # f.write(f'cd {calc_dir}\n')
         f.write(f'python calc.py\n')
 
 

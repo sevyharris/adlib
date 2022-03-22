@@ -42,6 +42,10 @@ ________________espresso.pwo
 """
 
 import os
+import adlib.env
+
+
+environment = adlib.env.load_environment()
 
 
 def make_run_relax_script(calc_dir, nproc=48, job_name='relax_slab'):
@@ -49,17 +53,18 @@ def make_run_relax_script(calc_dir, nproc=48, job_name='relax_slab'):
     # write the array job file
     with open(bash_filename, 'w') as f:
         f.write('#!/bin/bash\n\n')
-        f.write('#SBATCH --time=24:00:00\n')
-        f.write(f'#SBATCH --job-name={job_name}\n')
-        f.write('#SBATCH --mem=40Gb\n')
-        f.write('#SBATCH --cpus-per-task=1\n')
-        f.write(f'#SBATCH --ntasks={nproc}\n')
-        f.write('#SBATCH --partition=short\n')
-        f.write('#SBATCH --constraint=cascadelake\n\n')
-        f.write('module load gcc/10.1.0\n')
-        f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
-        f.write('module load scalapack/2.1.0-skylake\n\n')
-        f.write(f'cd {calc_dir}\n')
+        if environment == 'DISCOVERY':
+            f.write('#SBATCH --time=24:00:00\n')
+            f.write(f'#SBATCH --job-name={job_name}\n')
+            f.write('#SBATCH --mem=40Gb\n')
+            f.write('#SBATCH --cpus-per-task=1\n')
+            f.write(f'#SBATCH --ntasks={nproc}\n')
+            f.write('#SBATCH --partition=short\n')
+            f.write('#SBATCH --constraint=cascadelake\n\n')
+            f.write('module load gcc/10.1.0\n')
+            f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
+            f.write('module load scalapack/2.1.0-skylake\n\n')
+        # f.write(f'cd {calc_dir}\n')
         f.write(f'python relax_slab.py\n')
 
 
@@ -196,7 +201,16 @@ def run_relax_slab(slab_dir):
     import job_manager
     cur_dir = os.getcwd()
     os.chdir(slab_dir)
-    relax_slab_job = job_manager.SlurmJob()
-    cmd = "sbatch run.sh"
+    if environment == 'DISCOVERY':
+        relax_slab_job = job_manager.SlurmJob()
+        cmd = "sbatch run.sh"
+    if environment == 'SINGLE_NODE':
+        relax_slab_job = job_manager.DefaultJob()
+        cmd = "/bin/bash run.sh"
+    if environment == 'THETA':
+        raise NotImplementedError
+    else:
+        raise NotImplementedError
+
     relax_slab_job.submit(cmd)
     os.chdir(cur_dir)

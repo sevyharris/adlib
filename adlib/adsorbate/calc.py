@@ -36,6 +36,10 @@ ________________espresso.pwo
 
 import os
 import shutil
+import adlib.env
+
+
+environment = adlib.env.load_environment()
 
 
 def setup_relax_adsorbate(adsorbate_dir, xyz_dir=None, nproc=48):
@@ -86,16 +90,17 @@ def make_run_relax_ads_script(calc_dir, nproc=16):
     # write the array job file
     with open(bash_filename, 'w') as f:
         f.write('#!/bin/bash\n\n')
-        f.write('#SBATCH --time=24:00:00\n')
-        f.write(f'#SBATCH --job-name={ads_name}_relax' + '\n')
-        f.write('#SBATCH --mem=40Gb\n')
-        f.write('#SBATCH --cpus-per-task=1\n')
-        f.write(f'#SBATCH --ntasks={nproc}' + '\n')
-        f.write('#SBATCH --partition=short,west\n')
-        f.write('module load gcc/10.1.0\n')
-        f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
-        f.write('module load scalapack/2.1.0-skylake\n\n')
-        f.write(f'cd {calc_dir}\n')
+        if environment == 'DISCOVERY':
+            f.write('#SBATCH --time=24:00:00\n')
+            f.write(f'#SBATCH --job-name={ads_name}_relax' + '\n')
+            f.write('#SBATCH --mem=40Gb\n')
+            f.write('#SBATCH --cpus-per-task=1\n')
+            f.write(f'#SBATCH --ntasks={nproc}' + '\n')
+            f.write('#SBATCH --partition=short,west\n')
+            f.write('module load gcc/10.1.0\n')
+            f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
+            f.write('module load scalapack/2.1.0-skylake\n\n')
+        # f.write(f'cd {calc_dir}\n')
         f.write(f'python relax_ads.py\n')
 
 
@@ -218,7 +223,15 @@ def run_relax_adsorbate(adsorbate_dir):
     import job_manager
     cur_dir = os.getcwd()
     os.chdir(adsorbate_dir)
-    relax_ads_job = job_manager.SlurmJob()
-    cmd = "sbatch run.sh"
+    if environment == 'DISCOVERY':
+        relax_ads_job = job_manager.SlurmJob()
+        cmd = "sbatch run.sh"
+    if environment == 'SINGLE_NODE':
+        relax_ads_job = job_manager.DefaultJob()
+        cmd = "/bin/bash run.sh"
+    if environment == 'THETA':
+        raise NotImplementedError
+    else:
+        raise NotImplementedError
     relax_ads_job.submit(cmd)
     os.chdir(cur_dir)
