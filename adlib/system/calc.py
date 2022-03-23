@@ -230,7 +230,7 @@ def make_relax_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48):
         "",
         "# Read the energy back in",
         "energy = 0",
-        "with open(os.path.join(this_dir, 'espresso.pwo'), 'r') as f:",
+        "with open('espresso.pwo', 'r') as f:",
         "    traj = list(read_espresso_out(f, index=slice(None)))",
         "    energy = traj[-1].get_potential_energy()",
         "",
