@@ -76,14 +76,27 @@ def gen_CH4():
     write('CH4.xyz', ch4)
 
 
+def gen_CH():
+    ch = g2['CH']
+    write('CH.xyz', ch)
+
+
+def gen_CH3():
+    ch3 = g2['CH3']
+    write('CH3.xyz', ch3)
+
+
+
 if __name__ == '__main__':
-    gen_CO2()
-    gen_CO()
-    gen_O2()
-    gen_O()
-    gen_H2()
-    gen_H2O()
-    gen_H()
-    gen_OH()
-    gen_N2()
-    gen_CH4()
+    #gen_CO2()
+    #gen_CO()
+    #gen_O2()
+    #gen_O()
+    #gen_H2()
+    #gen_H2O()
+    #gen_H()
+    #gen_OH()
+    #gen_N2()
+    #gen_CH4()
+    gen_CH()
+    gen_CH3()
