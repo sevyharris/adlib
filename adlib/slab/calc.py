@@ -68,7 +68,7 @@ def make_run_relax_script(calc_dir, nproc=48, job_name='relax_slab'):
         f.write(f'python relax_slab.py\n')
 
 
-def make_relax_script(calc_dir, lattice_constant, metal='Cu', ecutwfc=60, kpt=5, smear=0.1, nproc=48):
+def make_relax_script(calc_dir, lattice_constant, metal='Cu', ecutwfc=60, kpt=5, smear=0.1, nproc=48, slab_size=(3, 3, 3)):
     """Function to make a python script to relax the slab
     """
     fmax = 0.01
@@ -112,7 +112,7 @@ def make_relax_script(calc_dir, lattice_constant, metal='Cu', ecutwfc=60, kpt=5,
         "",
         f"fmax = {fmax}",
         f"vacuum = {vacuum}",
-        f"slab = fcc111('{metal}', size=(3, 3, 4), vacuum=vacuum, a={lattice_constant})",
+        f"slab = fcc111('{metal}', size={slab_size}, vacuum=vacuum, a={lattice_constant})",
         "",
         "",
         "# Fix the bottom two layers",
