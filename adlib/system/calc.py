@@ -68,7 +68,7 @@ def make_run_relax_script(calc_dir, nproc=48, job_name='relax_system'):
         f.write(f'python relax_system.py\n')
 
 
-def make_relax_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48):
+def make_relax_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=48):
     """Function to make a python script to relax the slab-adsorption system
     """
     fmax = 0.01
@@ -141,9 +141,9 @@ def make_relax_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48):
         "",
         "for i, pos in enumerate(metal_slab.get_positions()):",
         "    if np.round(pos[2], 1) == z_values[0]:",
-        "       bottom_layer.append(metal_slab[i].index)",
+        "        bottom_layer.append(metal_slab[i].index)",
         "    if np.round(pos[2], 1) == z_values[1]:",
-        "       second_layer.append(metal_slab[i].index)",
+        "        second_layer.append(metal_slab[i].index)",
         "fixed_indicies = bottom_layer + second_layer",
         "fix_bottom_layers = FixAtoms(indices=fixed_indicies)",
         "metal_slab.set_constraint(fix_bottom_layers)",
@@ -190,6 +190,7 @@ def make_relax_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48):
         "    'control': {",
         "        'verbosity': 'high',",
         "        'calculation': 'scf',",
+        "        'disk_io': 'none',",
         "    },",
         "    'system': {",
         "        'input_dft': 'BEEF-VDW',",
