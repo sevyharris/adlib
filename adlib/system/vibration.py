@@ -121,7 +121,7 @@ def make_vib_analysis_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=48):
         "vib = Vibrations(system, indices=adsorbate_indices)",
         "vib.run()",
         "vib.summary()",
-        "freq = vib.get_frequencies()"
+        "freq = vib.get_frequencies()",
         "print(freq)",
         "print(vib.get_energies())",
         "",

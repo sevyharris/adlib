@@ -119,7 +119,7 @@ def make_relax_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=48, low_mixi
         "# if len(sys.argv) < 2:",
         "#     raise IndexError('Must specify starting height for fine system run')",
         "# height = float(sys.argv[1])",
-        "height = 4.0",
+        "height = 3.2",
         f"fmax = {fmax}",
         "T = time.localtime()",
         "start = time.time()",
@@ -282,4 +282,150 @@ def run_relax_system(system_dir):
         raise NotImplementedError
 
     relax_system_job.submit(cmd)
+    os.chdir(cur_dir)
+
+
+def make_scf_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48, low_mixing_beta=False):
+    """Function to make a python script to run scf given an input geometry
+    """
+    fmax = 0.01
+    vacuum = 7.5
+
+    electrons_str = ""
+    if low_mixing_beta:
+        electrons_str = """
+            'electrons': {
+                'mixing_beta': 0.3,
+                'electron_maxstep': 200,
+            },"""
+
+    python_file_lines = [
+        "import os",
+        "import sys",
+        "import numpy as np",
+        "from ase.build import bulk, fcc111, add_adsorbate",
+        "from ase.io import read, write",
+        "from ase import Atoms",
+        "from ase.optimize import BFGS",
+        "from ase.calculators.espresso import Espresso, EspressoProfile",
+        "from ase.constraints import FixAtoms",
+        "from ase.io.espresso import read_espresso_out",
+        "from ase.io.trajectory import Trajectory",
+        "from ase.io.ulm import InvalidULMFileError",
+        "import time",
+        "",
+        "",
+        "",
+        "T = time.localtime()",
+        "start = time.time()",
+        "",
+        "logfile = 'ase.log'",
+        "with open(logfile, 'a') as f:",
+        "    f.write(f'Start: {T[3]:02}:{T[4]:02}:{T[5]:02}\\n')",
+        "",
+        "input_geometry_file = 'input_geometry.pwo'",
+        "with open(input_geometry_file, 'r') as f:",
+        "    traj = list(read_espresso_out(f, index=slice(None)))",
+        "system = traj[-1]",
+        "",
+        "",
+        "espresso_settings = {",
+        "    'control': {",
+        "        'verbosity': 'high',",
+        "        'calculation': 'scf',",
+        "        'disk_io': 'none',",
+        "    },",
+        "    'system': {",
+        "        'input_dft': 'BEEF-VDW',",
+        "        'occupations': 'smearing',",
+        "        'smearing': 'mv',",
+        f"        'degauss': {smear},",
+        f"        'ecutwfc': {ecutwfc},",
+        "    },",
+        f"{electrons_str}",
+        "}",
+        "",
+        "pseudopotentials = {",
+        "    'C': 'C_ONCV_PBE-1.2.upf',",
+        "    'Cu': 'Cu_ONCV_PBE-1.2.upf',",
+        "    'O': 'O_ONCV_PBE-1.2.upf',",
+        "    'N': 'N_ONCV_PBE-1.2.upf',",
+        "    'H': 'H_ONCV_PBE-1.2.upf',",
+        "    'Pt': 'Pt_ONCV_PBE-1.2.upf',",
+        "    'Pd': 'Pd_ONCV_PBE-1.2.upf',",
+        "    'Au': 'Au_ONCV_PBE-1.2.upf',",
+        "    'Ag': 'Ag_ONCV_PBE-1.2.upf',",
+        "    'Al': 'Al_ONCV_PBE-1.2.upf',",
+        "    'Ni': 'Ni_ONCV_PBE-1.2.upf',",
+        "}",
+        "",
+        "pw_executable = os.environ['PW_EXECUTABLE']",
+        f"command = f'mpirun -np {nproc} " + "{pw_executable} -in PREFIX.pwi > PREFIX.pwo'",
+        "profile = EspressoProfile(argv=command.split())",
+        "calc = Espresso(",
+        "    # command=command,",
+        "    profile=profile,",
+        "    pseudopotentials=pseudopotentials,",
+        "    tstress=True,",
+        "    tprnfor=True,",
+        f"    kpts=({kpt}, {kpt}, 1),",
+        "    pseudo_dir=os.environ['PSEUDO_DIR'],",
+        "    input_data=espresso_settings,",
+        ")",
+        "",
+        "system.calc = calc",
+        "energy = system.get_potential_energy()",
+        "",
+        "",
+        "T = time.localtime()",
+        "end = time.time()",
+        "duration = end - start",
+        "",
+        "with open(logfile, 'a') as f:",
+        "    f.write(f'Energy: {energy}\\n')",
+        "    f.write(f'End: {T[3]:02}:{T[4]:02}:{T[5]:02}\\n')",
+        "    f.write(f'Completed in {duration} seconds\\n')",
+    ]
+
+    os.makedirs(calc_dir, exist_ok=True)
+    calc_filename = os.path.join(calc_dir, f'run_scf.py')
+    with open(calc_filename, 'w') as f:
+        f.writelines([line + '\n' for line in python_file_lines])
+
+def make_run_scf_script(calc_dir, nproc=48, job_name='run_scf'):
+    bash_filename = os.path.join(calc_dir, 'run.sh')
+    # write the array job file
+    with open(bash_filename, 'w') as f:
+        f.write('#!/bin/bash\n\n')
+        if environment == 'DISCOVERY':
+            f.write('#SBATCH --time=24:00:00\n')
+            f.write(f'#SBATCH --job-name={job_name}\n')
+            f.write('#SBATCH --mem=40Gb\n')
+            f.write('#SBATCH --cpus-per-task=1\n')
+            f.write(f'#SBATCH --ntasks={nproc}\n')
+            f.write('#SBATCH --partition=short\n')
+            f.write('#SBATCH --constraint=cascadelake\n\n')
+            f.write('module load gcc/10.1.0\n')
+            f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
+            f.write('module load scalapack/2.1.0-skylake\n\n')
+        # f.write(f'cd {calc_dir}\n')
+        f.write(f'python run_scf.py\n')
+
+
+def run_scf(calc_dir):
+    import job_manager
+    cur_dir = os.getcwd()
+    os.chdir(calc_dir)
+    if environment == 'DISCOVERY':
+        scf_job = job_manager.SlurmJob()
+        cmd = "sbatch run.sh"
+    elif environment == 'SINGLE_NODE':
+        scf_job = job_manager.DefaultJob()
+        cmd = "/bin/bash run.sh"
+    elif environment == 'THETA':
+        raise NotImplementedError
+    else:
+        raise NotImplementedError
+
+    scf_job.submit(cmd)
     os.chdir(cur_dir)
