@@ -1,6 +1,9 @@
 from ase.io import write
 from ase import Atoms
 from ase.collections import g2
+from ase.constraints import FixAtoms
+from ase.calculators.lj import LennardJones
+from ase.optimize import BFGS
 
 
 def gen_CO2():
@@ -81,6 +84,18 @@ def gen_CH():
     write('CH.xyz', ch)
 
 
+def gen_CH2():
+    ch2 = Atoms('CH2', positions=[(0, 0, 0), (-1.0, 0, 0), (1.0, 0, 0)]) 
+    # do a cheap optimization
+    c = FixAtoms(mask=[atom.symbol == 'C' for atom in ch2])
+    ch2.set_constraint(c)
+    ch2.calc = LennardJones()
+    opt = BFGS(ch2)
+    opt.run(fmax=0.01)
+    write('CH2.xyz', ch2)
+
+
+
 def gen_CH3():
     ch3 = g2['CH3']
     write('CH3.xyz', ch3)
@@ -98,5 +113,6 @@ if __name__ == '__main__':
     #gen_OH()
     #gen_N2()
     #gen_CH4()
-    gen_CH()
-    gen_CH3()
+    #gen_CH()
+    #gen_CH3()
+    gen_CH2()
