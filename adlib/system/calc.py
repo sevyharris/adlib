@@ -334,6 +334,8 @@ def make_scf_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48, low_mixing
         "        'verbosity': 'high',",
         "        'calculation': 'scf',",
         "        'disk_io': 'none',",
+        "        'max_seconds': 84600,  # 23.5 hours",
+        "        'restart_mode': 'restart',",
         "    },",
         "    'system': {",
         "        'input_dft': 'BEEF-VDW',",
