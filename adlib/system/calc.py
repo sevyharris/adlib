@@ -77,10 +77,10 @@ def make_relax_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=48, low_mixi
     electrons_str = ""
     if low_mixing_beta:
         electrons_str = """
-            'electrons': {
-                'mixing_beta': 0.3,
-                'electron_maxstep': 200,
-            },"""
+    'electrons': {
+        'mixing_beta': 0.3,
+        'electron_maxstep': 200,
+    },"""
 
     python_file_lines = [
         "import os",
@@ -294,10 +294,10 @@ def make_scf_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48, low_mixing
     electrons_str = ""
     if low_mixing_beta:
         electrons_str = """
-            'electrons': {
-                'mixing_beta': 0.3,
-                'electron_maxstep': 200,
-            },"""
+    'electrons': {
+        'mixing_beta': 0.3,
+        'electron_maxstep': 200,
+    },"""
 
     python_file_lines = [
         "import os",
