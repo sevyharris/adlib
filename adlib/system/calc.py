@@ -85,6 +85,7 @@ def make_relax_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=48, low_mixi
     python_file_lines = [
         "import os",
         "import sys",
+        "import shutil",
         "import numpy as np",
         "from ase.build import bulk, fcc111, add_adsorbate",
         "from ase.io import read, write",
@@ -181,6 +182,7 @@ def make_relax_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=48, low_mixi
         "restart = False",
         "if os.path.exists(traj_file):",
         "    try:",
+        "        shutil.copy(traj_file, 'old_system.traj')",
         "        traj = Trajectory(traj_file)",
         "        if len(traj) > 0:",
         "            metal_slab = traj[-1]",
@@ -285,7 +287,7 @@ def run_relax_system(system_dir):
     os.chdir(cur_dir)
 
 
-def make_scf_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48, low_mixing_beta=False):
+def make_scf_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48, low_mixing_beta=False, ensemble=False):
     """Function to make a python script to run scf given an input geometry
     """
     fmax = 0.01
@@ -298,6 +300,10 @@ def make_scf_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48, low_mixing
         'mixing_beta': 0.3,
         'electron_maxstep': 200,
     },"""
+
+    calculation = 'scf'
+    if ensemble:
+        calculation = 'ensemble'
 
     python_file_lines = [
         "import os",
@@ -332,7 +338,7 @@ def make_scf_script(calc_dir, ecutwfc=60, kpt=5, smear=0.1, nproc=48, low_mixing
         "espresso_settings = {",
         "    'control': {",
         "        'verbosity': 'high',",
-        "        'calculation': 'scf',",
+        f"        'calculation': '{calculation}',",
         "        'disk_io': 'none',",
         "        'max_seconds': 84600,  # 23.5 hours",
         "        'restart_mode': 'restart',",

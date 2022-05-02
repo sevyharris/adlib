@@ -15,19 +15,21 @@ import adlib.env
 environment = adlib.env.load_environment()
 
 
-def make_run_vib_analysis_script(calc_dir, nproc=48, job_name='vib'):
+def make_run_vib_analysis_script(calc_dir, nproc=16, job_name='vib'):
     bash_filename = os.path.join(calc_dir, 'run.sh')
     # write the array job file
     with open(bash_filename, 'w') as f:
         f.write('#!/bin/bash\n\n')
         if environment == 'DISCOVERY':
-            f.write('#SBATCH --time=24:00:00\n')
+            # f.write('#SBATCH --time=24:00:00\n')
+            f.write('#SBATCH --time=14-00:00:00\n')
             f.write(f'#SBATCH --job-name={job_name}\n')
             f.write('#SBATCH --mem=40Gb\n')
             f.write('#SBATCH --cpus-per-task=1\n')
             f.write(f'#SBATCH --ntasks={nproc}\n')
-            f.write('#SBATCH --partition=short\n')
-            f.write('#SBATCH --constraint=cascadelake\n\n')
+            f.write('#SBATCH --partition=west\n\n')
+            # f.write('#SBATCH --partition=short\n')
+            # f.write('#SBATCH --constraint=cascadelake\n\n')
             f.write('module load gcc/10.1.0\n')
             f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
             f.write('module load scalapack/2.1.0-skylake\n\n')
@@ -35,7 +37,7 @@ def make_run_vib_analysis_script(calc_dir, nproc=48, job_name='vib'):
         f.write(f'python vib_analysis.py\n')
 
 
-def make_vib_analysis_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=48):
+def make_vib_analysis_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=16):
     """Function to make a python script to relax the slab-adsorption system
     """
     fmax = 0.01
