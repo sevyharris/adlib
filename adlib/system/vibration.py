@@ -37,11 +37,19 @@ def make_run_vib_analysis_script(calc_dir, nproc=16, job_name='vib'):
         f.write(f'python vib_analysis.py\n')
 
 
-def make_vib_analysis_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=16):
+def make_vib_analysis_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=16, low_mixing_beta=False):
     """Function to make a python script to relax the slab-adsorption system
     """
     fmax = 0.01
     vacuum = 7.5
+
+    electrons_str = ""
+    if low_mixing_beta:
+        electrons_str = """
+    'electrons': {
+        'mixing_beta': 0.3,
+        'electron_maxstep': 200,
+    },"""
 
     python_file_lines = [
         "import os",
@@ -79,6 +87,7 @@ def make_vib_analysis_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=16):
         f"        'degauss': {smear},",
         f"        'ecutwfc': {ecutwfc},",
         "    },",
+        f"{electrons_str}",
         "}",
         "",
         "pseudopotentials = {",
