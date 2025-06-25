@@ -101,6 +101,22 @@ def gen_CH3():
     write('CH3.xyz', ch3)
 
 
+def gen_NH3():
+    nh3 = g2['NH3']
+    write('NH3.xyz', nh3)
+
+def gen_NH2():
+    nh2 = g2['NH2']
+    write('NH2.xyz', nh2)
+
+def gen_NH():
+    nh = g2['NH']
+    write('NH.xyz', nh)
+
+def gen_N():
+    n = g2['N']
+    write('N.xyz', n)
+
 
 if __name__ == '__main__':
     #gen_CO2()
@@ -115,4 +131,9 @@ if __name__ == '__main__':
     #gen_CH4()
     #gen_CH()
     #gen_CH3()
-    gen_CH2()
+    #gen_CH2()
+    gen_NH3()
+    gen_NH2()
+    gen_NH()
+    gen_N()
+
