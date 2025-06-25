@@ -44,9 +44,10 @@ environment = adlib.env.load_environment()
 
 def setup_relax_adsorbate(adsorbate_dir, xyz_dir=None, nproc=48):
     ads_name = os.path.basename(adsorbate_dir)
-    if xyz_dir is None:
+    print(f'xyz dir is {xyz_dir}')
+    if not xyz_dir:
         # TODO make this relative to the package and ship the code with some example adsorbate xyzs
-        xyz_dir = '/work/westgroup/harris.se/espresso/qe_workflow/resources/adsorbates/'
+        xyz_dir = '/projects/westgroup/harris.se/espresso/qe_workflow/resources/adsorbates/'
     os.makedirs(adsorbate_dir, exist_ok=True)
     xyz_file = os.path.join(xyz_dir, f'{ads_name}.xyz')
     shutil.copy(xyz_file, adsorbate_dir)
@@ -72,9 +73,12 @@ def make_run_array(dest_dir, N_runs, job_name='ads_converge', nproc=16):
         f.write('# create a variable that includes leading zeros\n')
         f.write('RUN_i=$(printf "%04.0f" $SLURM_ARRAY_TASK_ID)\n')
 
-        f.write('module load gcc/10.1.0\n')
-        f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
-        f.write('module load scalapack/2.1.0-skylake\n\n')
+        if environment == 'DISCOVERY':
+            f.write('module load gcc/10.1.0\n')
+            f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
+            f.write('module load scalapack/2.1.0-skylake\n\n')
+        elif environment == 'EXPLORER':
+            f.write('module load OpenMPI/4.1.6\n')
 
         f.write(f'cd {run_i_dir}\n')
         f.write(f'python relax_ads.py\n\n')
@@ -100,6 +104,14 @@ def make_run_relax_ads_script(calc_dir, nproc=16):
             f.write('module load gcc/10.1.0\n')
             f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
             f.write('module load scalapack/2.1.0-skylake\n\n')
+        elif environment == 'EXPLORER':
+            f.write('#SBATCH --time=24:00:00\n')
+            f.write(f'#SBATCH --job-name={ads_name}_relax' + '\n')
+            f.write('#SBATCH --mem=40Gb\n')
+            f.write('#SBATCH --cpus-per-task=1\n')
+            f.write(f'#SBATCH --ntasks={nproc}' + '\n')
+            f.write('#SBATCH --partition=short,west\n')
+            f.write('module load OpenMPI/4.1.6\n')
         # f.write(f'cd {calc_dir}\n')
         f.write(f'python relax_ads.py\n')
 
@@ -230,7 +242,7 @@ def run_relax_adsorbate(adsorbate_dir):
     import job_manager
     cur_dir = os.getcwd()
     os.chdir(adsorbate_dir)
-    if environment == 'DISCOVERY':
+    if environment in ['DISCOVERY', 'EXPLORER']:
         relax_ads_job = job_manager.SlurmJob()
         cmd = "sbatch run.sh"
     elif environment == 'SINGLE_NODE':

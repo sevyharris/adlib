@@ -21,7 +21,7 @@ These functions are divided into
 
 
 adlib follows this workflow to compute binding energies:
-1. Compute bulk lattice constant
+1. Compute bulk lattice constant (do vc relax for initial guess, then eos coarse and eos fine to narrow in on minimum energy)
 2. Optimize slab geometry and compute energy
 3. Optimize adsorbate geometry and compute energy
 4. Place adsorbate on slab, optimize geometry, compute energy

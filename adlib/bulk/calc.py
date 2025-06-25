@@ -93,7 +93,7 @@ def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy', nproc=16):
             f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
             f.write('module load scalapack/2.1.0-skylake\n\n')
         elif environment == 'EXPLORER':
-            f.write('module load OpenMPI/4.1.6 module\n')
+            f.write('module load OpenMPI/4.1.6\n')
 
         f.write(f'cd {run_i_dir}\n')
         f.write(f'python calc.py\n')

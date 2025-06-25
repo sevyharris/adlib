@@ -51,7 +51,7 @@ def setup_relax_adsorbate(adsorbate_dir, xyz_dir=None):
     ads_name = os.path.basename(adsorbate_dir)
     if xyz_dir is None:
         # TODO make this relative to the package and ship the code with some example adsorbate xyzs
-        xyz_dir = '/work/westgroup/harris.se/espresso/qe_workflow/resources/adsorbates/'
+        xyz_dir = '/projects/westgroup/harris.se/espresso/qe_workflow/resources/adsorbates/'
     os.makedirs(adsorbate_dir, exist_ok=True)
     xyz_file = os.path.join(xyz_dir, f'{ads_name}.xyz')
     shutil.copy(xyz_file, adsorbate_dir)
@@ -81,7 +81,7 @@ def setup_converge(adsorbate_dir, job_type, xyz_dir=None, adsorbate_pwo=None):
         adsorbate = read(xyz_file)
     else:
         # TODO make this relative to the package and ship the code with some example adsorbate xyzs
-        xyz_dir = '/work/westgroup/harris.se/espresso/qe_workflow/resources/adsorbates/'
+        xyz_dir = '/projects/westgroup/harris.se/espresso/qe_workflow/resources/adsorbates/'
         xyz_file = os.path.join(xyz_dir, f'{ads_name}.xyz')
         adsorbate = read(xyz_file)
 
