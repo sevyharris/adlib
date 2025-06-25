@@ -76,6 +76,20 @@ def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.0
     adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos')
 
 
+def get_lattice_constant_from_atoms(atoms):
+    fcc_metals = ['Pt', 'Ni']
+    bcc_metals = ['Cr', 'Fe']
+
+    r = atoms.get_distances(0, 1)[0] / 2.0
+    if atoms[0].symbol in fcc_metals:
+        lattice_constant = 2.0 * r * np.sqrt(2)
+    elif atoms[0].symbol in bcc_metals:
+        lattice_constant = 4.0 * r / np.sqrt(3.0)
+    else:
+        raise NotImplemented(f'Metal {atoms[0].symbol} not in fcc or bcc metals')
+    return lattice_constant
+
+
 def setup_eos_coarse(bulk_dir, lattice_constant_guess, metal='Cu'):
     """
     script to set up coarse calculation of E vs. lattice constant
@@ -148,7 +162,7 @@ def analyze_eos(calc_dir):
 
     bulk_eos = ase.eos.EquationOfState(volumes, energies)
     v0, e0, B = bulk_eos.fit()
-    a0 = np.float_power(v0, 1.0 / 3.0)
+    a0 = np.float_power(v0, 1.0 / 3.0)  # change this to match bcc or fcc
     return a0
 
 
@@ -170,7 +184,8 @@ def plot_energy_vs_lattice(calc_dir, dest_dir=None):
             traj = list(read_espresso_out(f, index=slice(None)))
             atoms = traj[-1]
             energies.append(atoms.get_potential_energy())
-            lattice_constant = atoms.get_distances(0, 1)[0] * np.sqrt(2)
+
+            lattice_constant = get_lattice_constant_from_atoms(atoms)
             lattice_constants.append(lattice_constant)
 
     fig, ax = plt.subplots()
@@ -217,7 +232,7 @@ def plot_eos(calc_dir, dest_dir=None):
             except IndexError:
                 continue
             energies.append(atoms.get_potential_energy())
-            lattice_constant = atoms.get_distances(0, 1)[0] * np.sqrt(2)
+            lattice_constant = get_lattice_constant_from_atoms(atoms)
             lattice_constants.append(lattice_constant)
             volumes.append(atoms.cell.volume)
 
