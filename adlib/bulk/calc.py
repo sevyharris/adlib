@@ -57,6 +57,14 @@ def make_scf_run_file(calc_dir, nproc=16, job_name='bulk_energy'):
             f.write('module load gcc/10.1.0\n')
             f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
             f.write('module load scalapack/2.1.0-skylake\n\n')
+        elif environment == 'EXPLORER':
+            f.write('#SBATCH --time=24:00:00\n')
+            f.write(f'#SBATCH --job-name={job_name}\n')
+            f.write('#SBATCH --mem=40Gb\n')
+            f.write('#SBATCH --cpus-per-task=1\n')
+            f.write(f'#SBATCH --ntasks={nproc}\n')
+            f.write('#SBATCH --partition=short,west\n\n')
+            f.write('module load OpenMPI/4.1.6\n')
 
         # f.write(f'cd {calc_dir}\n')
         f.write(f'python calc.py\n')
@@ -80,9 +88,12 @@ def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy', nproc=16):
         f.write('# create a variable that includes leading zeros\n')
         f.write('RUN_i=$(printf "%04.0f" $SLURM_ARRAY_TASK_ID)\n')
 
-        f.write('module load gcc/10.1.0\n')
-        f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
-        f.write('module load scalapack/2.1.0-skylake\n\n')
+        if environment == 'DISCOVERY':
+            f.write('module load gcc/10.1.0\n')
+            f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
+            f.write('module load scalapack/2.1.0-skylake\n\n')
+        elif environment == 'EXPLORER':
+            f.write('module load OpenMPI/4.1.6 module\n')
 
         f.write(f'cd {run_i_dir}\n')
         f.write(f'python calc.py\n')
@@ -137,6 +148,8 @@ def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', ecutwfc=1000, kpt
         "    'Ag': 'Ag_ONCV_PBE-1.2.upf',",
         "    'Al': 'Al_ONCV_PBE-1.2.upf',",
         "    'Ni': 'Ni_ONCV_PBE-1.2.upf',",
+        "    'Fe': 'Fe_ONCV_PBE-1.2.upf',",
+        "    'Cr': 'Cr_ONCV_PBE-1.2.upf',",
         "}",
         "",
         f"command = f'mpirun -np {nproc} " + "{pw_executable} -in PREFIX.pwi > PREFIX.pwo'",

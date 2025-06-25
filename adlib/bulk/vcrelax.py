@@ -46,10 +46,10 @@ import adlib.env
 environment = adlib.env.load_environment()
 
 
-def setup_vc_relax(bulk_dir, metal='Cu', lattice_constant_guess=3.6, nproc=16):
+def setup_vc_relax(bulk_dir, metal='Cu', lattice_constant_guess=3.6, crystal_structure='fcc', nproc=16):
     os.makedirs(bulk_dir, exist_ok=True)
     vc_relax_dir = os.path.join(bulk_dir, 'vc_relax')
-    make_vc_relax_script(vc_relax_dir, metal, lattice_constant_guess, nproc=nproc)
+    make_vc_relax_script(vc_relax_dir, metal, lattice_constant_guess, crystal_structure=crystal_structure, nproc=nproc)
     make_run_vc_relax_script(vc_relax_dir)
 
 
@@ -76,7 +76,7 @@ def make_run_vc_relax_script(calc_dir, nproc=16):
         f.write(f'python relax_bulk.py\n')
 
 
-def make_vc_relax_script(calc_dir, metal, lattice_constant, nproc=16):
+def make_vc_relax_script(calc_dir, metal, lattice_constant, crystal_structure='fcc', nproc=16):
     """
     Make a python script that uses ase to run quantum espresso
     """
@@ -123,7 +123,7 @@ def make_vc_relax_script(calc_dir, metal, lattice_constant, nproc=16):
         "}",
         "",
         "",
-        f"bulk_metal = bulk('{metal}', crystalstructure='fcc', a={lattice_constant}, cubic=True)",
+        f"bulk_metal = bulk('{metal}', crystalstructure='{crystal_structure}', a={lattice_constant}, cubic=True)",
         "",
         "pw_executable = os.environ['PW_EXECUTABLE']",
         "",
@@ -139,6 +139,8 @@ def make_vc_relax_script(calc_dir, metal, lattice_constant, nproc=16):
         "    'Ag': 'Ag_ONCV_PBE-1.2.upf',",
         "    'Al': 'Al_ONCV_PBE-1.2.upf',",
         "    'Ni': 'Ni_ONCV_PBE-1.2.upf',",
+        "    'Fe': 'Fe_ONCV_PBE-1.2.upf',",
+        "    'Cr': 'Cr_ONCV_PBE-1.2.upf',",
         "}",
         "",
         f"command = f'mpirun -np {nproc} " + "{pw_executable} -in PREFIX.pwi > PREFIX.pwo'",

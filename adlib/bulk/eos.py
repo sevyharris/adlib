@@ -111,6 +111,7 @@ def setup_eos_fine(bulk_dir, lattice_constant_guess, metal='Cu'):
 
 
 def run_eos(calc_dir):
+    # expecting the eos directory
     import job_manager
     cur_dir = os.getcwd()
     os.chdir(calc_dir)

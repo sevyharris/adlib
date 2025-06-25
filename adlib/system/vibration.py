@@ -102,6 +102,8 @@ def make_vib_analysis_script(calc_dir, ecutwfc=50, kpt=5, smear=0.1, nproc=16, l
         "    'Ag': 'Ag_ONCV_PBE-1.2.upf',",
         "    'Al': 'Al_ONCV_PBE-1.2.upf',",
         "    'Ni': 'Ni_ONCV_PBE-1.2.upf',",
+        "    'Fe': 'Fe_ONCV_PBE-1.2.upf',",
+        "    'Cr': 'Cr_ONCV_PBE-1.2.upf',",
         "}",
         "",
         "",

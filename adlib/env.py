@@ -7,6 +7,11 @@ discovery_env = {
     'name': 'DISCOVERY',
     'max_cpus': 64,
 }
+
+explorer_env = {
+    'name': 'EXPLORER',
+    'max_cpus': 64,
+}
 single_node_env = {
     'name': 'SINGLE_NODE',
     'max_cpus': 4,
@@ -16,11 +21,13 @@ single_node_env = {
 valid_environments = [
     'SINGLE_NODE',  # personal computer -- default
     'DISCOVERY',    # SLURM cluster
+    'EXPLORER',    # SLURM cluster
     'THETA',        # COBALT cluster
 ]
 environments = {
     'SINGLE_NODE': single_node_env,
     'DISCOVERY': discovery_env,
+    'EXPLORER': explorer_env,
 }
 
 
