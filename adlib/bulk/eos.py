@@ -107,7 +107,7 @@ def setup_eos_coarse(bulk_dir, lattice_constant_guess, metal='Cu'):
     adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos_coarse')
 
 
-def setup_eos_fine(bulk_dir, lattice_constant_guess, metal='Cu'):
+def setup_eos_fine(bulk_dir, lattice_constant_guess, metal='Cu', crystal_structure='fcc'):
     """
     script to set up fine calculation of E vs. lattice constant
     """
@@ -119,7 +119,7 @@ def setup_eos_fine(bulk_dir, lattice_constant_guess, metal='Cu'):
 
     for i, lattice_constant in enumerate(lattice_constants):
         calc_dir = os.path.join(eos_dir, f'run_{i:04}')
-        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal)
+        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure)
 
     adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos_fine')
 

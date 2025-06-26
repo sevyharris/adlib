@@ -99,7 +99,7 @@ def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy', nproc=16):
         f.write(f'python calc.py\n')
 
 
-def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', ecutwfc=1000, kpt=9, smear=0.1, nproc=16):
+def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', crystal_structure='fcc', ecutwfc=1000, kpt=9, smear=0.1, nproc=16):
 
     python_file_lines = [
         "import os",
@@ -132,7 +132,7 @@ def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', ecutwfc=1000, kpt
         "}",
         "",
         "",
-        f"bulk = ase.build.bulk('{metal}', crystalstructure='fcc', a={lattice_constant}, cubic=True)",
+        f"bulk = ase.build.bulk('{metal}', crystalstructure='{crystal_structure}', a={lattice_constant}, cubic=True)",
         "",
         "pw_executable = os.environ['PW_EXECUTABLE']",
         "",
