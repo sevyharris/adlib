@@ -76,7 +76,7 @@ def make_run_vc_relax_script(calc_dir, nproc=16):
         f.write(f'python relax_bulk.py\n')
 
 
-def make_vc_relax_script(calc_dir, metal, lattice_constant, crystal_structure='fcc', nproc=16):
+def make_vc_relax_script(calc_dir, metal, lattice_constant, crystal_structure='fcc', magnetism=None, nproc=16):
     """
     Make a python script that uses ase to run quantum espresso
     """
@@ -85,12 +85,18 @@ def make_vc_relax_script(calc_dir, metal, lattice_constant, crystal_structure='f
     kpts = 5
     ecutwfc = 500
 
+    magnetism_line = ""
+    if str(magnetism).lower() == 'antiferromagnetic':
+        magnetism_line = "bulk.set_initial_magnetic_moments([1.0, -1.0])\nassert len(bulk) == 2"
+    elif str(magnetism).lower() == 'ferromagnetic':
+        magnetism_line = "bulk.set_initial_magnetic_moments([1.0, 1.0])\nassert len(bulk) == 2"
+
     python_file_lines = [
         "import os",
         "import sys",
         "import time",
         "from ase.calculators.espresso import Espresso, EspressoProfile",
-        "from ase.build import bulk",
+        "import ase.build",
         "",
         "",
         "T = time.localtime()",
@@ -123,7 +129,8 @@ def make_vc_relax_script(calc_dir, metal, lattice_constant, crystal_structure='f
         "}",
         "",
         "",
-        f"bulk_metal = bulk('{metal}', crystalstructure='{crystal_structure}', a={lattice_constant}, cubic=True)",
+        f"bulk_metal = ase.build.bulk('{metal}', crystalstructure='{crystal_structure}', a={lattice_constant}, cubic=True)",
+        magnetism_line,
         "",
         "pw_executable = os.environ['PW_EXECUTABLE']",
         "",
@@ -183,7 +190,7 @@ def run_vc_relax(bulk_dir):
     calc_dir = os.path.join(bulk_dir, 'vc_relax')
     cur_dir = os.getcwd()
     os.chdir(calc_dir)
-    if environment == 'DISCOVERY':
+    if environment in ['DISCOVERY', 'EXPLORER']:
         vc_relax_job = job_manager.SlurmJob()
         cmd = "sbatch run.sh"
     elif environment == 'SINGLE_NODE':

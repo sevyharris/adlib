@@ -99,7 +99,13 @@ def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy', nproc=16):
         f.write(f'python calc.py\n')
 
 
-def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', crystal_structure='fcc', ecutwfc=1000, kpt=9, smear=0.1, nproc=16):
+def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', crystal_structure='fcc', ecutwfc=1000, kpt=9, smear=0.1, nproc=16, magnetism=None):
+
+    magnetism_line = ""
+    if str(magnetism).lower() == 'antiferromagnetic':
+        magnetism_line = "bulk.set_initial_magnetic_moments([1.0, -1.0])\nassert len(bulk) == 2"
+    elif str(magnetism).lower() == 'ferromagnetic':
+        magnetism_line = "bulk.set_initial_magnetic_moments([1.0, 1.0])\nassert len(bulk) == 2"
 
     python_file_lines = [
         "import os",
@@ -134,6 +140,7 @@ def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', crystal_structure
         "",
         f"bulk = ase.build.bulk('{metal}', crystalstructure='{crystal_structure}', a={lattice_constant}, cubic=True)",
         "",
+        magnetism_line,
         "pw_executable = os.environ['PW_EXECUTABLE']",
         "",
         "pseudopotentials = {",

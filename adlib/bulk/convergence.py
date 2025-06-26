@@ -46,7 +46,7 @@ from ase.io.espresso import read_espresso_out
 import adlib.bulk.calc
 
 
-def setup_kpts_converge(bulk_dir, lattice_constant_center, metal='Cu', crystal_structure='fcc'):
+def setup_kpts_converge(bulk_dir, lattice_constant_center, metal='Cu', crystal_structure='fcc', magnetism=None):
     """
     script to set up N jobs to check kpts convergence
     """
@@ -61,12 +61,12 @@ def setup_kpts_converge(bulk_dir, lattice_constant_center, metal='Cu', crystal_s
     for i, k in enumerate(kpts):
         for j, lattice_constant in enumerate(lattice_constants):
             calc_dir = os.path.join(kpts_dir, str(k), f'run_{j:04}')
-            adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure, ecutwfc=500, kpt=k, smear=0.1, nproc=16)
+            adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure, magnetism=magnetism, ecutwfc=500, kpt=k, smear=0.1, nproc=16)
 
         adlib.bulk.calc.make_scf_run_file_array(os.path.join(kpts_dir, str(k)), j, job_name='kpts_bulk_converge')
 
 
-def setup_ecutwfc_converge(bulk_dir, lattice_constant_center, metal='Cu', crystal_structure='fcc'):
+def setup_ecutwfc_converge(bulk_dir, lattice_constant_center, metal='Cu', crystal_structure='fcc', magnetism=None):
     """
     script to set up N jobs to check ecutwfc convergence
     """
@@ -80,12 +80,12 @@ def setup_ecutwfc_converge(bulk_dir, lattice_constant_center, metal='Cu', crysta
     for i, ecut in enumerate(ecuts):
         for j, lattice_constant in enumerate(lattice_constants):
             calc_dir = os.path.join(ecutwfc_dir, str(ecut), f'run_{j:04}')
-            adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure, ecutwfc=ecut, kpt=7, smear=0.1, nproc=16)
+            adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure, magnetism=magnetism, ecutwfc=ecut, kpt=7, smear=0.1, nproc=16)
 
         adlib.bulk.calc.make_scf_run_file_array(os.path.join(ecutwfc_dir, str(ecut)), j, job_name='ecut_bulk_converge')
 
 
-def setup_smear_converge(bulk_dir, lattice_constant_center, metal='Cu', crystal_structure='fcc'):
+def setup_smear_converge(bulk_dir, lattice_constant_center, metal='Cu', crystal_structure='fcc', magnetism=None):
     """
     script to set up N jobs to check MV smearing convergence
     """
@@ -98,7 +98,7 @@ def setup_smear_converge(bulk_dir, lattice_constant_center, metal='Cu', crystal_
     for i, smear in enumerate(smears):
         for j, lattice_constant in enumerate(lattice_constants):
             calc_dir = os.path.join(smear_dir, str(smear), f'run_{j:04}')
-            adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure, ecutwfc=1000, kpt=7, smear=smear, nproc=16)
+            adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure, magnetism=magnetism, ecutwfc=1000, kpt=7, smear=smear, nproc=16)
 
         adlib.bulk.calc.make_scf_run_file_array(os.path.join(smear_dir, str(smear)), j, job_name='smear_bulk_converge')
 

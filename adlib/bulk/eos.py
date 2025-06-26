@@ -53,7 +53,7 @@ import ase.eos
 import adlib.bulk.calc
 
 
-def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.05):
+def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.05, magnetism=None):
     """
     script to set up N jobs
 
@@ -71,7 +71,7 @@ def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.0
 
     for i, lattice_constant in enumerate(lattice_constants):
         calc_dir = os.path.join(eos_dir, f'run_{i:04}')
-        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, ecutwfc=1000, kpt=9, smear=0.1, nproc=16)
+        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, magnetism=magnetism, ecutwfc=1000, kpt=9, smear=0.1, nproc=16)
 
     adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos')
 
@@ -90,7 +90,7 @@ def get_lattice_constant_from_atoms(atoms):
     return lattice_constant
 
 
-def setup_eos_coarse(bulk_dir, lattice_constant_guess, metal='Cu'):
+def setup_eos_coarse(bulk_dir, lattice_constant_guess, metal='Cu', magnetism=None):
     """
     script to set up coarse calculation of E vs. lattice constant
     """
@@ -102,12 +102,12 @@ def setup_eos_coarse(bulk_dir, lattice_constant_guess, metal='Cu'):
 
     for i, lattice_constant in enumerate(lattice_constants):
         calc_dir = os.path.join(eos_dir, f'run_{i:04}')
-        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal)
+        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, magnetism=magnetism)
 
     adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos_coarse')
 
 
-def setup_eos_fine(bulk_dir, lattice_constant_guess, metal='Cu', crystal_structure='fcc'):
+def setup_eos_fine(bulk_dir, lattice_constant_guess, metal='Cu', crystal_structure='fcc', magnetism=None):
     """
     script to set up fine calculation of E vs. lattice constant
     """
@@ -119,7 +119,7 @@ def setup_eos_fine(bulk_dir, lattice_constant_guess, metal='Cu', crystal_structu
 
     for i, lattice_constant in enumerate(lattice_constants):
         calc_dir = os.path.join(eos_dir, f'run_{i:04}')
-        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure)
+        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure, magnetism=magnetism)
 
     adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos_fine')
 
@@ -182,8 +182,11 @@ def plot_energy_vs_lattice(calc_dir, dest_dir=None):
     for pwo_file in pwo_files:
         with open(pwo_file, 'r') as f:
             traj = list(read_espresso_out(f, index=slice(None)))
-            atoms = traj[-1]
-            energies.append(atoms.get_potential_energy())
+            try:
+                atoms = traj[-1]
+                energies.append(atoms.get_potential_energy())
+            except IndexError:
+                energies.append(np.nan)
 
             lattice_constant = get_lattice_constant_from_atoms(atoms)
             lattice_constants.append(lattice_constant)
