@@ -53,7 +53,7 @@ import ase.eos
 import adlib.bulk.calc
 
 
-def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.05, magnetism=None):
+def setup_eos(eos_dir, lattice_constant_guess, metal='Cu', crystal_structure='fcc', N=21, half_range=0.05, magnetism=None, ecutwfc=1000, ecutrho=None, kpt=9, smear=0.1, mixing_beta=0.7):
     """
     script to set up N jobs
 
@@ -63,7 +63,6 @@ def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.0
         compute energies for lattice constants ranging from 3.5 - 4.5,
         then half_range should be set to 0.5 Angstroms
     """
-    eos_dir = os.path.join(bulk_dir, 'eos')
     os.makedirs(eos_dir, exist_ok=True)
 
     deltas = np.linspace(-half_range, half_range, N)
@@ -71,7 +70,7 @@ def setup_eos(bulk_dir, lattice_constant_guess, metal='Cu', N=21, half_range=0.0
 
     for i, lattice_constant in enumerate(lattice_constants):
         calc_dir = os.path.join(eos_dir, f'run_{i:04}')
-        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, magnetism=magnetism, ecutwfc=1000, kpt=9, smear=0.1, nproc=16)
+        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure, magnetism=magnetism, ecutwfc=ecutwfc, ecutrho=ecutrho, kpt=kpt, smear=smear, nproc=16, mixing_beta=mixing_beta)
 
     adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos')
 
@@ -90,7 +89,7 @@ def get_lattice_constant_from_atoms(atoms):
     return lattice_constant
 
 
-def setup_eos_coarse(bulk_dir, lattice_constant_guess, metal='Cu', magnetism=None):
+def setup_eos_coarse(bulk_dir, lattice_constant_guess, metal='Cu', crystal_structure='fcc', magnetism=None):
     """
     script to set up coarse calculation of E vs. lattice constant
     """
@@ -102,7 +101,7 @@ def setup_eos_coarse(bulk_dir, lattice_constant_guess, metal='Cu', magnetism=Non
 
     for i, lattice_constant in enumerate(lattice_constants):
         calc_dir = os.path.join(eos_dir, f'run_{i:04}')
-        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, magnetism=magnetism)
+        adlib.bulk.calc.make_scf_calc_file(calc_dir, lattice_constant, metal=metal, crystal_structure=crystal_structure, magnetism=magnetism)
 
     adlib.bulk.calc.make_scf_run_file_array(eos_dir, i, job_name='bulk_eos_coarse')
 
@@ -186,21 +185,24 @@ def plot_energy_vs_lattice(calc_dir, dest_dir=None):
                 atoms = traj[-1]
                 energies.append(atoms.get_potential_energy())
             except IndexError:
-                energies.append(np.nan)
+                # energies.append(np.nan)
+                # lattice_constants.append(np.nan)
+                continue
 
             lattice_constant = get_lattice_constant_from_atoms(atoms)
             lattice_constants.append(lattice_constant)
 
+    assert len(energies) > 0, 'Must have at least one completed energy'
     fig, ax = plt.subplots()
     plt.plot(lattice_constants, energies, marker='o')
 
     # label the minimum
     label_min = True
     if label_min:
-        min_energy = np.min(energies)
+        min_energy = np.nanmin(energies)
         min_i = energies.index(min_energy)
         ax.annotate(
-            f'({np.round(lattice_constants[min_i], 3)}, {np.round(min_energy, 3)})',
+            f'({np.round(lattice_constants[min_i], 4)}, {np.round(min_energy, 4)})',
             xy=(lattice_constants[min_i], min_energy),
             xytext=(lattice_constants[min_i], np.mean(energies)),
             arrowprops=dict(arrowstyle="->", connectionstyle="arc3"),
@@ -210,7 +212,7 @@ def plot_energy_vs_lattice(calc_dir, dest_dir=None):
     ax.yaxis.get_major_formatter().set_useOffset(False)
     plt.xlabel(r'Lattice Constant ($\AA$)')
     plt.title('Bulk Energy vs. Lattice Constant')
-    plt.savefig(os.path.join(dest_dir, 'energy_vs_lattice.png'))
+    # plt.savefig(os.path.join(dest_dir, 'energy_vs_lattice.png'))
 
 
 def plot_eos(calc_dir, dest_dir=None):

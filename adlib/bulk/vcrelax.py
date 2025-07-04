@@ -46,10 +46,10 @@ import adlib.env
 environment = adlib.env.load_environment()
 
 
-def setup_vc_relax(bulk_dir, metal='Cu', lattice_constant_guess=3.6, crystal_structure='fcc', nproc=16):
+def setup_vc_relax(bulk_dir, metal='Cu', lattice_constant_guess=3.6, crystal_structure='fcc', magnetism=None, nproc=16, ecutwfc=1000, kpts=5):
     os.makedirs(bulk_dir, exist_ok=True)
     vc_relax_dir = os.path.join(bulk_dir, 'vc_relax')
-    make_vc_relax_script(vc_relax_dir, metal, lattice_constant_guess, crystal_structure=crystal_structure, nproc=nproc)
+    make_vc_relax_script(vc_relax_dir, metal, lattice_constant_guess, crystal_structure=crystal_structure, nproc=nproc, magnetism=magnetism, ecutwfc=ecutwfc, kpts=kpts)
     make_run_vc_relax_script(vc_relax_dir)
 
 
@@ -72,24 +72,30 @@ def make_run_vc_relax_script(calc_dir, nproc=16):
             f.write('module load gcc/10.1.0\n')
             f.write('module load openmpi/4.0.5-skylake-gcc10.1\n')
             f.write('module load scalapack/2.1.0-skylake\n\n')
+        elif environment == 'EXPLORER':
+            f.write('#SBATCH --time=12:00:00\n')
+            f.write('#SBATCH --job-name=vc_relax\n')
+            f.write('#SBATCH --mem=40Gb\n')
+            f.write('#SBATCH --cpus-per-task=1\n')
+            f.write(f'#SBATCH --ntasks={nproc}\n')
+            f.write('#SBATCH --partition=short,west\n\n')
+            f.write('module load OpenMPI/4.1.6\n\n')
         # f.write(f'cd {calc_dir}\n')
         f.write(f'python relax_bulk.py\n')
 
 
-def make_vc_relax_script(calc_dir, metal, lattice_constant, crystal_structure='fcc', magnetism=None, nproc=16):
+def make_vc_relax_script(calc_dir, metal, lattice_constant, crystal_structure='fcc', magnetism=None, nproc=16, ecutwfc=1000, kpts=5):
     """
     Make a python script that uses ase to run quantum espresso
     """
 
     python_file_name = os.path.join(calc_dir, 'relax_bulk.py')
-    kpts = 5
-    ecutwfc = 500
 
     magnetism_line = ""
     if str(magnetism).lower() == 'antiferromagnetic':
-        magnetism_line = "bulk.set_initial_magnetic_moments([1.0, -1.0])\nassert len(bulk) == 2"
+        magnetism_line = "bulk_metal.set_initial_magnetic_moments([1.0, -1.0])\nassert len(bulk_metal) == 2"
     elif str(magnetism).lower() == 'ferromagnetic':
-        magnetism_line = "bulk.set_initial_magnetic_moments([1.0, 1.0])\nassert len(bulk) == 2"
+        magnetism_line = "bulk_metal.set_initial_magnetic_moments([1.0, 1.0])\nassert len(bulk_metal) == 2"
 
     python_file_lines = [
         "import os",

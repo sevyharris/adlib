@@ -99,13 +99,24 @@ def make_scf_run_file_array(dest_dir, N_runs, job_name='bulk_energy', nproc=16):
         f.write(f'python calc.py\n')
 
 
-def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', crystal_structure='fcc', ecutwfc=1000, kpt=9, smear=0.1, nproc=16, magnetism=None):
+def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', crystal_structure='fcc', ecutwfc=1000, ecutrho=None, kpt=9, smear=0.1, nproc=16, magnetism=None, mixing_beta=0.7):
 
     magnetism_line = ""
-    if str(magnetism).lower() == 'antiferromagnetic':
-        magnetism_line = "bulk.set_initial_magnetic_moments([1.0, -1.0])\nassert len(bulk) == 2"
-    elif str(magnetism).lower() == 'ferromagnetic':
-        magnetism_line = "bulk.set_initial_magnetic_moments([1.0, 1.0])\nassert len(bulk) == 2"
+    if magnetism is not None:
+        magnetism_line = f'initial_magnetic_moments = {magnetism}' + \
+            '\nassert len(bulk) == len(initial_magnetic_moments)' + \
+            '\nbulk.set_initial_magnetic_moments(initial_magnetic_moments)'
+    ecutrho_line = ""
+    if ecutrho is not None:
+        ecutrho_line = f"        'ecutrho': {ecutrho},"
+
+    electrons_line = ""
+    if mixing_beta != 0.7:
+        electrons_line = """
+    'electrons': {
+        'mixing_beta': """ + str(mixing_beta) + """,
+        'electron_maxstep': 200,
+    },"""
 
     python_file_lines = [
         "import os",
@@ -134,7 +145,9 @@ def make_scf_calc_file(calc_dir, lattice_constant, metal='Cu', crystal_structure
         "        'smearing': 'mv',",
         f"        'degauss': {smear},",
         f"        'ecutwfc': {ecutwfc},",
+        ecutrho_line,
         "    },",
+        electrons_line,
         "}",
         "",
         "",
